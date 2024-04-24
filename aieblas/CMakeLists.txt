@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.22)
+if (${CMAKE_VERSION} VERSION_GREATER "3.24")
+# Set new FetchContent_Declare option DOWNLOAD_EXTRACT_TIMESTAMP to false
+cmake_policy(SET CMP0135 NEW)
+endif ()
 
 project(aieblas CXX)
 
@@ -8,7 +12,6 @@ include(FetchContent)
 # JSON library from https://github.com/nlohmann/json
 FetchContent_Declare(json URL
     https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
     URL_HASH
     SHA256=d6c65aca6b1ed68e7a182f4757257b107ae403032760ed6ef121c9d55e81757d
 )
@@ -18,7 +21,6 @@ FetchContent_MakeAvailable(json)
 FetchContent_Declare(cxxopts URL
     GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
     GIT_TAG 4bf61f08697b110d9e3991864650a405b3dd515d # v3.2.1
-    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 )
 FetchContent_MakeAvailable(cxxopts)
 
@@ -77,7 +79,6 @@ else ()
     # std::format alternative from https://github.com/fmtlib/fmt
     FetchContent_Declare(fmt URL
         https://github.com/fmtlib/fmt/releases/download/10.2.1/fmt-10.2.1.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
         URL_HASH
         SHA256=312151a2d13c8327f5c9c586ac6cf7cddc1658e8f53edae0ec56509c8fa516c9
     )
