@@ -57,6 +57,8 @@ void generator::parse_json(fs::path json_file) {
             throw parse_error(std::format("user_name should be a string in kernel {}.", i));
         }
 
+        krnl.user_name = item["user_name"].get<std::string>();
+
         if (!item.count("type")) {
             throw parse_error(std::format("kernel {} is missing 'type'", i));
         } else if (!item["type"].is_string()) {

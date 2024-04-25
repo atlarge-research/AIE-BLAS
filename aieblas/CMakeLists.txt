@@ -64,17 +64,23 @@ target_compile_options(codegen PRIVATE
     >
 )
 
-if (cxx_std_26 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
-    message(STATUS "Using C++ 26 standard")
-    target_compile_features(codegen PUBLIC cxx_std_26)
-elseif (cxx_std_23 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+if (cxx_std_23 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
     message(STATUS "Using C++ 23 standard")
     target_compile_features(codegen PUBLIC cxx_std_23)
+    set(DETECTED_CXX_STD "c++23")
 elseif (cxx_std_20 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
     message(STATUS "Using C++ 20 standard")
     target_compile_features(codegen PUBLIC cxx_std_20)
+    set(DETECTED_CXX_STD "c++20")
 else ()
     message(STATUS "Using C++ 17 standard")
+    target_compile_features(codegen PUBLIC cxx_std_17)
+    set(DETECTED_CXX_STD "c++17")
+endif ()
+
+include(cmake/check_format.cmake)
+
+if (NOT CXX_HAS_FORMAT)
     message(STATUS "Falling back to {fmt} library")
     # std::format alternative from https://github.com/fmtlib/fmt
     FetchContent_Declare(fmt URL
@@ -90,7 +96,5 @@ else ()
                 ${fmt_SOURCE_DIR}/src/format.cc)
     target_include_directories(fmt_core PUBLIC ${fmt_SOURCE_DIR}/include)
     target_compile_features(fmt_core PUBLIC cxx_std_17)
-
-    target_compile_features(codegen PUBLIC cxx_std_17)
     target_link_libraries(codegen PRIVATE fmt_core)
 endif ()

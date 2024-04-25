@@ -19,7 +19,7 @@ namespace std {
 template <class... Args> using format_string = std::string_view;
 template <typename... Args>
 static inline std::string format(const std::string_view fmt, Args &&...args) {
-    return fmt::format(fmt, std::forward<Args>(args)...);
+    return fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
 }
 } // namespace std
 #endif
@@ -49,23 +49,25 @@ namespace std {
 template <typename... Args>
 static inline void print(std::ostream &stream, std::format_string<Args...> fmt,
                          Args &&...args) {
-    stream << std::format(fmt, std::forward<Args>(args)...);
+    stream << std::format(std::runtime_format(fmt),
+                          std::forward<Args>(args)...);
 }
 
 template <typename... Args>
 static inline void print(std::format_string<Args...> fmt, Args &&...args) {
-    print(std::cout, fmt, std::forward<Args>(args)...);
+    print(std::cout, std::runtime_format(fmt), std::forward<Args>(args)...);
 }
 
 template <typename... Args>
 static inline void println(std::ostream &stream,
                            std::format_string<Args...> fmt, Args &&...args) {
-    stream << std::format(fmt, std::forward<Args>(args)...) << "\n";
+    stream << std::format(std::runtime_format(fmt),
+                          std::forward<Args>(args)...) << "\n";
 }
 
 template <typename... Args>
 static inline void println(std::format_string<Args...> fmt, Args &&...args) {
-    println(std::cout, fmt, std::forward<Args>(args)...);
+    println(std::cout, std::runtime_format(fmt), std::forward<Args>(args)...);
 }
 } // namespace std
 #endif
