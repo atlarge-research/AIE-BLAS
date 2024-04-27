@@ -8,6 +8,8 @@ namespace codegen {
 
 void codegen(fs::path json_file, fs::path output) {
     generator gen{json_file, output};
+
+    gen.generate_kernels();
 }
 
 } // codegen

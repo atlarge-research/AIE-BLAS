@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cctype>
 #include <cxxopts.hpp>
 
 #include "aieblas/codegen.hpp"
@@ -30,9 +32,12 @@ struct arguments parse_args(int argc, const char* const* argv) {
 
         options.add_options()
             ("json", "JSON file containing BLAS routines",
-            cxxopts::value<std::string>())
-            ("output", "Output directory",
-            cxxopts::value<std::string>())("h,help", "Print usage");
+             cxxopts::value<std::string>())
+            ("output", "Output directory", cxxopts::value<std::string>())
+            ("l,log-level", "Set the logging level",
+             cxxopts::value<std::string>())
+            ("h,help", "Print usage");
+
         options.positional_help("<json> <output>");
         options.parse_positional({"json", "output"});
         auto results = options.parse(argc, argv);
@@ -45,6 +50,27 @@ struct arguments parse_args(int argc, const char* const* argv) {
             std::fflush(stdout);
             exit(0);
         }
+
+        if (results.count("log-level")) {
+            std::string level_str = results["log-level"].as<std::string>();
+            std::transform(level_str.begin(), level_str.end(),
+                           level_str.begin(), ::tolower);
+            aieblas::log_level level = aieblas::log_level_from_str(level_str);
+            if (level == aieblas::log_level::unknown) {
+                error(std::format("'{}' is not a supported log level",
+                                  level_str));
+            }
+            aieblas::set_log_level(level);
+        }
+
+        if (aieblas::get_log_level() <= aieblas::log_level::debug) {
+            std::println("C++ features:");
+            cxx_compat::print_features();
+            std::println("");
+        }
+
+        log(aieblas::log_level::verbose, "Log level: {}",
+            aieblas::log_level_to_str(aieblas::get_log_level()));
 
         if (!results.count("json")) {
             error_required("json");
@@ -98,11 +124,11 @@ struct arguments parse_args(int argc, const char* const* argv) {
 int main(int argc, char *argv[]) {
     struct arguments args = parse_args(argc, argv);
 
-    try {
-        cg::codegen(args.json, args.output);
-    } catch (const std::exception &e) {
-        std::println("Codegen error: {}", e.what());
-    }
+    // try {
+    cg::codegen(args.json, args.output);
+    // } catch (const std::exception &e) {
+    //     std::println("Codegen error: {}", e.what());
+    // }
 
     return 0;
 }

@@ -6,8 +6,9 @@ check_cxx_source_compiles("
 #include <iostream>
 #include <format>
 
-void main() {
+int main() {
     std::cout << std::format(\"{}\", \"hello world\") << std::endl;
+    return 0;
 }
 " CXX_HAS_FORMAT
 )

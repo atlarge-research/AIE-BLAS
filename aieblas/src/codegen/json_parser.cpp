@@ -1,5 +1,6 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <vector>
 
 #include "aieblas/detail/util.hpp"
 #include "aieblas/detail/codegen/generator.hpp"
@@ -29,8 +30,11 @@ void generator::parse_json(fs::path json_file) {
     this->d.platform = json_data["platform"].get<std::string>();
 
     json &kernels = json_data["kernels"];
+    std::size_t n_kernels = kernels.size();
+    this->d.kernels.clear();
+    this->d.kernels.reserve(n_kernels);
 
-    for (size_t i = 0; i < kernels.size(); ++i) {
+    for (std::size_t i = 0; i < n_kernels; ++i) {
         json &item = kernels[i];
         kernel krnl;
 
@@ -71,6 +75,8 @@ void generator::parse_json(fs::path json_file) {
         if (krnl.type == dtype::unknown) {
             throw parse_error(std::format("type '{}' is unknown in kernel {}.", type, i));
         }
+
+        this->d.kernels.push_back(krnl);
     }
 }
 

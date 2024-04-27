@@ -6,7 +6,8 @@ endif ()
 
 project(aieblas CXX)
 
-message(STATUS "Using compiler ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS
+    "Using compiler ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
 include(FetchContent)
 # JSON library from https://github.com/nlohmann/json
@@ -30,19 +31,28 @@ set(AIEBLAS_INT_HDR "${AIEBLAS_HDR}/aieblas/detail")
 set(AIEBLAS_COMMON_HEADERS
     "${AIEBLAS_INT_HDR}/util.hpp"
     "${AIEBLAS_INT_HDR}/util/cxx_compat.hpp"
+    "${AIEBLAS_INT_HDR}/util/logging.hpp"
+)
+
+set(AIEBLAS_COMMON_SRC
+    "${AIEBLAS_SRC}/util/logging.cpp"
 )
 
 set(AIEBLAS_CODEGEN_HEADERS
-    "${AIEBLAS_HDR}/aieblas/codegen.hpp"
-    "${AIEBLAS_INT_HDR}/codegen/datastructures.hpp"
-    "${AIEBLAS_INT_HDR}/codegen/generator.hpp"
-    "${AIEBLAS_INT_HDR}/codegen/json_parser.hpp"
+"${AIEBLAS_HDR}/aieblas/codegen.hpp"
+"${AIEBLAS_INT_HDR}/codegen/datastructures.hpp"
+"${AIEBLAS_INT_HDR}/codegen/generator.hpp"
+"${AIEBLAS_INT_HDR}/codegen/json_parser.hpp"
+"${AIEBLAS_INT_HDR}/codegen/kernels.hpp"
 )
 
 add_executable(codegen
     "${AIEBLAS_SRC}/codegen/standalone.cpp"
     "${AIEBLAS_SRC}/codegen/codegen.cpp"
+    "${AIEBLAS_SRC}/codegen/generator.cpp"
     "${AIEBLAS_SRC}/codegen/json_parser.cpp"
+    "${AIEBLAS_SRC}/codegen/kernels/generate_kernels.cpp"
+    ${AIEBLAS_COMMON_SRC}
     ${AIEBLAS_COMMON_HEADERS}
     ${AIEBLAS_CODEGEN_HEADERS}
 )
@@ -76,6 +86,12 @@ else ()
     message(STATUS "Using C++ 17 standard")
     target_compile_features(codegen PUBLIC cxx_std_17)
     set(DETECTED_CXX_STD "c++17")
+endif ()
+
+include(cmake/check_source_code.cmake)
+if (NOT CXX_HAS_SOURCE_LOCATION)
+    message(FATAL_ERROR
+        "AIE-BLAS requires a compiler with support for C++20 std::source_location")
 endif ()
 
 include(cmake/check_format.cmake)

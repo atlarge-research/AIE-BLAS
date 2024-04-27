@@ -1,7 +1,6 @@
 #pragma once
 
 #include <filesystem>
-#include <vector>
 
 namespace aieblas {
 namespace codegen {

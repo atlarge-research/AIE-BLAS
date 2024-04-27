@@ -14,11 +14,12 @@
 #ifdef __cpp_lib_format
 #include <format>
 #else
+#define CXX_COMPAT_NEEDS_FORMAT 1
 #include <fmt/format.h>
 namespace std {
 template <class... Args> using format_string = std::string_view;
 template <typename... Args>
-static inline std::string format(const std::string_view fmt, Args &&...args) {
+static inline std::string format(format_string<Args...> fmt, Args &&...args) {
     return fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
 }
 } // namespace std
@@ -32,8 +33,8 @@ static inline std::string format(const std::string_view fmt, Args &&...args) {
 #if !defined(__cpp_lib_format) || __cpp_lib_format < 202311L
 #define CXX_COMPAT_NEEDS_RUNTIME_FORMAT 1
 namespace std {
-static inline std::string runtime_format(std::string_view fmt) {
-    return std::string{fmt};
+static inline std::string_view runtime_format(std::string_view fmt) {
+    return fmt;
 }
 } // namespace std
 #endif
