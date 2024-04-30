@@ -33,7 +33,8 @@ static inline std::string format(format_string<Args...> fmt, Args &&...args) {
 #if !defined(__cpp_lib_format) || __cpp_lib_format < 202311L
 #define CXX_COMPAT_NEEDS_RUNTIME_FORMAT 1
 namespace std {
-static inline std::string_view runtime_format(std::string_view fmt) {
+template <typename T>
+static inline const T &runtime_format(const T &fmt) {
     return fmt;
 }
 } // namespace std

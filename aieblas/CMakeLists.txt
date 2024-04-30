@@ -44,26 +44,50 @@ set(AIEBLAS_CODEGEN_HEADERS
 "${AIEBLAS_INT_HDR}/codegen/generator.hpp"
 "${AIEBLAS_INT_HDR}/codegen/json_parser.hpp"
 "${AIEBLAS_INT_HDR}/codegen/kernels.hpp"
+"${AIEBLAS_INT_HDR}/codegen/kernels/scale.hpp"
 )
 
-add_executable(codegen
-    "${AIEBLAS_SRC}/codegen/standalone.cpp"
+add_library(codegen STATIC
     "${AIEBLAS_SRC}/codegen/codegen.cpp"
     "${AIEBLAS_SRC}/codegen/generator.cpp"
     "${AIEBLAS_SRC}/codegen/json_parser.cpp"
     "${AIEBLAS_SRC}/codegen/kernels/generate_kernels.cpp"
+    "${AIEBLAS_SRC}/codegen/kernels/get_kernel_generator.cpp"
+    "${AIEBLAS_SRC}/codegen/kernels/impl/scale.cpp"
     ${AIEBLAS_COMMON_SRC}
     ${AIEBLAS_COMMON_HEADERS}
     ${AIEBLAS_CODEGEN_HEADERS}
 )
 
-target_link_libraries(codegen PRIVATE
-    nlohmann_json::nlohmann_json
-    cxxopts::cxxopts
+add_executable(codegen_standalone
+"${AIEBLAS_SRC}/codegen/standalone.cpp"
 )
 
-target_include_directories(codegen PRIVATE ${AIEBLAS_HDR})
+set_property(TARGET codegen_standalone PROPERTY OUTPUT_NAME codegen)
+
+target_link_libraries(codegen PRIVATE
+nlohmann_json::nlohmann_json
+)
+
+target_link_libraries(codegen_standalone PRIVATE
+codegen
+cxxopts::cxxopts
+)
+
+target_include_directories(codegen PUBLIC ${AIEBLAS_HDR})
+
 target_compile_options(codegen PRIVATE
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:
+        -Wall
+        -Wextra
+        -pedantic
+        -Wno-unused-function
+        -Wno-unused-parameter
+        $<$<CONFIG:Debug>:-g3 -ggdb>
+    >
+)
+
+target_compile_options(codegen_standalone PRIVATE
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:
         -Wall
         -Wextra
@@ -113,4 +137,5 @@ if (NOT CXX_HAS_FORMAT)
     target_include_directories(fmt_core PUBLIC ${fmt_SOURCE_DIR}/include)
     target_compile_features(fmt_core PUBLIC cxx_std_17)
     target_link_libraries(codegen PRIVATE fmt_core)
+    target_link_libraries(codegen_standalone PRIVATE fmt_core)
 endif ()

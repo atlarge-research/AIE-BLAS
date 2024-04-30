@@ -36,7 +36,11 @@ class generator {
         return cur_file_;
     }
 
-    std::size_t indent() {
+    const std::ofstream &cur_file() const {
+        return cur_file_;
+    }
+
+    std::size_t indent() const {
         return indent_;
     }
 
@@ -53,7 +57,8 @@ class generator {
         INCREASE_BEFORE = 1U,
         INCREASE_AFTER = 2U,
         DECREASE_BEFORE = 4U,
-        DECREASE_AFTER = 8U
+        DECREASE_AFTER = 8U,
+        NO_INDENT = 16U
     };
 
     template <unsigned opts = NO_OPTS, typename... Args>
@@ -62,6 +67,10 @@ class generator {
             indent_incr();
         } else if (opts & DECREASE_BEFORE) {
             indent_decr();
+        }
+
+        if (opts & NO_INDENT) {
+            indented = true;
         }
 
         if (!indented) {
