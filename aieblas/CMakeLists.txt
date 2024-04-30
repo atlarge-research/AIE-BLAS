@@ -9,6 +9,9 @@ project(aieblas CXX)
 message(STATUS
     "Using compiler ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
+#####################
+# Load dependencies #
+#####################
 include(FetchContent)
 # JSON library from https://github.com/nlohmann/json
 FetchContent_Declare(json URL
@@ -25,6 +28,9 @@ FetchContent_Declare(cxxopts URL
 )
 FetchContent_MakeAvailable(cxxopts)
 
+################
+# Common files #
+################
 set(AIEBLAS_SRC "${CMAKE_CURRENT_LIST_DIR}/src")
 set(AIEBLAS_HDR "${CMAKE_CURRENT_LIST_DIR}/include")
 set(AIEBLAS_INT_HDR "${AIEBLAS_HDR}/aieblas/detail")
@@ -47,6 +53,9 @@ set(AIEBLAS_CODEGEN_HEADERS
 "${AIEBLAS_INT_HDR}/codegen/kernels/scale.hpp"
 )
 
+##################
+# Define targets #
+##################
 add_library(codegen STATIC
     "${AIEBLAS_SRC}/codegen/codegen.cpp"
     "${AIEBLAS_SRC}/codegen/generator.cpp"
@@ -76,6 +85,9 @@ cxxopts::cxxopts
 
 target_include_directories(codegen PUBLIC ${AIEBLAS_HDR})
 
+###########################
+# Set debug/warning flags #
+###########################
 target_compile_options(codegen PRIVATE
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:
         -Wall
@@ -98,6 +110,10 @@ target_compile_options(codegen_standalone PRIVATE
     >
 )
 
+######################################
+# Set latest C++ versions to utilize #
+# new features                       #
+######################################
 if (cxx_std_23 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
     message(STATUS "Using C++ 23 standard")
     target_compile_features(codegen PUBLIC cxx_std_23)
@@ -112,14 +128,21 @@ else ()
     set(DETECTED_CXX_STD "c++17")
 endif ()
 
+######################################
+# Check whether std::source_location #
+# is supported                       #
+######################################
 include(cmake/check_source_code.cmake)
 if (NOT CXX_HAS_SOURCE_LOCATION)
     message(FATAL_ERROR
         "AIE-BLAS requires a compiler with support for C++20 std::source_location")
 endif ()
 
+#####################################
+# Fall back to {fmt} if std::format #
+# is not available                  #
+#####################################
 include(cmake/check_format.cmake)
-
 if (NOT CXX_HAS_FORMAT)
     message(STATUS "Falling back to {fmt} library")
     # std::format alternative from https://github.com/fmtlib/fmt
