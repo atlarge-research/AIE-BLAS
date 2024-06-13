@@ -45,12 +45,13 @@ set(AIEBLAS_COMMON_SRC
 )
 
 set(AIEBLAS_CODEGEN_HEADERS
-"${AIEBLAS_HDR}/aieblas/codegen.hpp"
-"${AIEBLAS_INT_HDR}/codegen/datastructures.hpp"
-"${AIEBLAS_INT_HDR}/codegen/generator.hpp"
-"${AIEBLAS_INT_HDR}/codegen/json_parser.hpp"
-"${AIEBLAS_INT_HDR}/codegen/kernels.hpp"
-"${AIEBLAS_INT_HDR}/codegen/kernels/scale.hpp"
+    "${AIEBLAS_HDR}/aieblas/codegen.hpp"
+    "${AIEBLAS_INT_HDR}/codegen/datastructures.hpp"
+    "${AIEBLAS_INT_HDR}/codegen/generator.hpp"
+    "${AIEBLAS_INT_HDR}/codegen/json_parser.hpp"
+    "${AIEBLAS_INT_HDR}/codegen/kernels.hpp"
+    "${AIEBLAS_INT_HDR}/codegen/kernels/scale.hpp"
+    "${AIEBLAS_INT_HDR}/codegen/kernels/dot.hpp"
 )
 
 ##################
@@ -60,27 +61,32 @@ add_library(codegen STATIC
     "${AIEBLAS_SRC}/codegen/codegen.cpp"
     "${AIEBLAS_SRC}/codegen/generator.cpp"
     "${AIEBLAS_SRC}/codegen/json_parser.cpp"
+    "${AIEBLAS_SRC}/codegen/cmake/generate_cmake.cpp"
+    "${AIEBLAS_SRC}/codegen/config/generate_config.cpp"
+    "${AIEBLAS_SRC}/codegen/graph/generate_graph.cpp"
     "${AIEBLAS_SRC}/codegen/kernels/generate_kernels.cpp"
     "${AIEBLAS_SRC}/codegen/kernels/get_kernel_generator.cpp"
     "${AIEBLAS_SRC}/codegen/kernels/impl/scale.cpp"
+    "${AIEBLAS_SRC}/codegen/kernels/impl/dot.cpp"
+    "${AIEBLAS_SRC}/codegen/pl_kernels/generate_pl_kernels.cpp"
     ${AIEBLAS_COMMON_SRC}
     ${AIEBLAS_COMMON_HEADERS}
     ${AIEBLAS_CODEGEN_HEADERS}
 )
 
 add_executable(codegen_standalone
-"${AIEBLAS_SRC}/codegen/standalone.cpp"
+    "${AIEBLAS_SRC}/codegen/standalone.cpp"
 )
 
 set_property(TARGET codegen_standalone PROPERTY OUTPUT_NAME codegen)
 
 target_link_libraries(codegen PRIVATE
-nlohmann_json::nlohmann_json
+    nlohmann_json::nlohmann_json
 )
 
 target_link_libraries(codegen_standalone PRIVATE
-codegen
-cxxopts::cxxopts
+    codegen
+    cxxopts::cxxopts
 )
 
 target_include_directories(codegen PUBLIC ${AIEBLAS_HDR})

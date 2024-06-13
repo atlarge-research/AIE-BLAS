@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_map>
 #include <vector>
 
 #include "aieblas/detail/util.hpp"
@@ -15,13 +16,40 @@ enum class dtype : unsigned {
     unknown, int32, int64, float32, float64
 };
 
+enum class karg_type : unsigned {
+    unknown, input_plio, output_plio
+};
+
+struct kernel_arg {
+    karg_type type;
+    std::string name;
+    unsigned window_size;
+};
+
+enum class connection_type : unsigned {
+    host, kernel
+};
+
+struct connection {
+    connection_type type;
+
+    // kernel specific
+    std::string kernel;
+    std::string parameter;
+};
+
 struct kernel {
     blas_op operation;
     std::string user_name;
     dtype type;
+    unsigned vsize;
+
+    // maps parameter (of this kernel) to outside data port
+    std::unordered_map<std::string, connection> connections;
 };
 
 struct data {
+    bool profile;
     std::string platform;
     std::vector<kernel> kernels;
 };
@@ -73,6 +101,27 @@ inline dtype datatype_from_str(const std::string_view str) {
         return dtype::float64;
     } else {
         return dtype::unknown;
+    }
+}
+
+constexpr inline const char *kernel_arg_type_to_str(karg_type karg) {
+    switch (karg) {
+    case karg_type::input_plio:
+        return "input_plio";
+    case karg_type::output_plio:
+        return "output_plio";
+    default:
+        return "unknown";
+    }
+}
+
+inline karg_type kernel_arg_type_from_str(const std::string_view str) {
+    if (str == "input_plio") {
+        return karg_type::input_plio;
+    } else if (str == "output_plio") {
+        return karg_type::output_plio;
+    } else {
+        return karg_type::unknown;
     }
 }
 

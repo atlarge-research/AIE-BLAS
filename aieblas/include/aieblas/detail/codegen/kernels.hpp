@@ -8,6 +8,8 @@
 namespace aieblas {
 namespace codegen {
 
+std::vector<kernel_arg> get_kernel_args(blas_op operation);
+
 class kernel_generator {
 public:
     kernel_generator(const kernel &kernel)
@@ -17,6 +19,15 @@ public:
 
     virtual void gen_kernel_args(generator &gen) = 0;
     virtual void gen_kernel_body(generator &gen) = 0;
+
+    inline std::vector<kernel_arg> get_kernel_args() const {
+        return ::aieblas::codegen::get_kernel_args(k.operation);
+    }
+
+    virtual void gen_mm2s(generator &gen) = 0;
+    virtual void gen_s2mm(generator &gen) = 0;
+
+    virtual void gen_link(generator &gen) = 0;
 
 protected:
     const kernel &k;

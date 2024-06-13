@@ -26,7 +26,7 @@ std::string log_header(log_level level, const std::source_location& loc) {
         std::string_view filename = loc.file_name();
         fs::path proximate = fs::proximate(filename, ec);
         if (!ec) {
-            filename = proximate.c_str();
+            filename = proximate.native();
         }
         message.append(std::format("{}:{} in {}: ",
                                    filename, loc.line(), loc.function_name()));

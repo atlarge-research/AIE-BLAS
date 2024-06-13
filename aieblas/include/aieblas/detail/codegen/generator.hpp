@@ -17,7 +17,7 @@ class generator {
             parse_json(json);
         } catch (const parse_error &e) {
             throw parse_error(std::format("Parsing error from '{}': {}",
-                                          json.c_str(), e.what()));
+                                          json.native(), e.what()));
         }
     }
 
@@ -27,9 +27,23 @@ class generator {
         }
     }
 
-    void generate_kernels();
+    const data &get_data() {
+        return this->d;
+    }
 
-    void open(fs::path filename);
+    void generate_kernels();
+    void generate_graph();
+    void generate_pl_kernels();
+    void generate_config();
+    void generate_cmake();
+
+    enum comment_type : unsigned {
+        NO_COMMENT = 0U,
+        C_STYLE = 1U,
+        HASHTAG = 2U
+    };
+
+    void open(fs::path filename, comment_type comment_type = C_STYLE);
     void close();
 
     std::ofstream &cur_file() {
@@ -97,7 +111,8 @@ class generator {
 
     private:
     void parse_json(fs::path json);
-    void generate_kernel(const kernel &kernel, fs::path kernel_dir);
+    void generate_kernel(const kernel &kernel, const fs::path &kernel_dir);
+    void generate_pl_kernel(const kernel &kernel, const fs::path &pl_dir);
 
     void print_indent();
 
@@ -106,6 +121,7 @@ class generator {
 
     std::vector<fs::path> kernel_srcs;
     std::vector<fs::path> kernel_hdrs;
+    std::vector<fs::path> pl_kernels;
 
     std::ofstream cur_file_;
     fs::path cur_filename;
@@ -113,6 +129,18 @@ class generator {
     bool indented;
     const std::size_t indent_level = 4;
 };
+
+static inline std::string aie_dtype(dtype type, unsigned vsize = 0) {
+    const char *type_str = datatype_to_str(type);
+
+    if (vsize == 0) {
+        return type_str;
+    } else {
+        return std::format("aie::vector<{}, {}>", type_str, vsize);
+    }
+}
+
+static constexpr unsigned num_samples = 32;
 
 } // codegen
 } // aieblas

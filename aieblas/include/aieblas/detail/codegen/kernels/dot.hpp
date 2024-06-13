@@ -7,14 +7,14 @@
 namespace aieblas {
 namespace codegen {
 namespace generators {
-class scale_generator : public kernel_generator {
+class dot_generator : public kernel_generator {
 public:
-    scale_generator(const kernel &kernel)
+    dot_generator(const kernel &kernel)
     : kernel_generator(kernel), dtype(aie_dtype(kernel.type, kernel.vsize)),
-      in(kernel.connections.at("in")), ctrl(kernel.connections.at("ctrl")),
+      x(kernel.connections.at("x")), y(kernel.connections.at("y")),
       out((kernel.connections.at("out"))) {}
 
-    virtual ~scale_generator() {}
+    virtual ~dot_generator() {}
 
     void gen_kernel_args(generator &gen) override;
     void gen_kernel_body(generator &gen) override;
@@ -27,12 +27,12 @@ public:
 private:
     const std::string dtype;
 
-    const connection in;
-    const connection ctrl;
+    const connection x;
+    const connection y;
     const connection out;
 };
 
-std::vector<kernel_arg> get_scale_args();
+std::vector<kernel_arg> get_dot_args();
 
 } // generators
 } // codegen
