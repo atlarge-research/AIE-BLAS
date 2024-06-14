@@ -23,7 +23,7 @@ enum class karg_type : unsigned {
 struct kernel_arg {
     karg_type type;
     std::string name;
-    unsigned window_size;
+    unsigned dimensions; // 0: scalar 1: vector 2: matrix
 };
 
 enum class connection_type : unsigned {
@@ -43,6 +43,7 @@ struct kernel {
     std::string user_name;
     dtype type;
     unsigned vsize;
+    unsigned wsize;
 
     // maps parameter (of this kernel) to outside data port
     std::unordered_map<std::string, connection> connections;
@@ -101,6 +102,19 @@ inline dtype datatype_from_str(const std::string_view str) {
         return dtype::float64;
     } else {
         return dtype::unknown;
+    }
+}
+
+constexpr inline unsigned datatype_to_bits(dtype type) {
+    switch (type) {
+        case dtype::float32:
+        case dtype::int32:
+            return 32;
+        case dtype::float64:
+        case dtype::int64:
+            return 64;
+        default:
+            return 0;
     }
 }
 

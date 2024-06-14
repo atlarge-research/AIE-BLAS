@@ -140,7 +140,5 @@ static inline std::string aie_dtype(dtype type, unsigned vsize = 0) {
     }
 }
 
-static constexpr unsigned num_samples = 32;
-
 } // codegen
 } // aieblas

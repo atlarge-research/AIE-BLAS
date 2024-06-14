@@ -168,6 +168,17 @@ void generator::parse_json(fs::path json_file) {
             krnl.vsize = item["vector_size"].get<unsigned>();
         }
 
+        krnl.wsize = 128;
+        if (item.count("window_size")) {
+            if (!item["window_size"].is_number_unsigned()) {
+                throw parse_error(std::format(
+                    "window_size should be an unsigned integer in kernel {}.",
+                    i));
+            }
+
+            krnl.wsize = item["window_size"].get<unsigned>();
+        }
+
         const std::vector<kernel_arg> args = get_kernel_args(krnl.operation);
 
         for (const kernel_arg &arg : args) {

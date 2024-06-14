@@ -12,6 +12,8 @@ void dot_generator::gen_kernel_args(generator &gen) {
 }
 
 void dot_generator::gen_kernel_body(generator &gen) {
+    const unsigned num_samples = k.wsize * 8 / datatype_to_bits(k.type);
+    gen.println("constexpr unsigned NUM_SAMPLES = {};", num_samples);
     gen.println("{0} c_x, c_y;", dtype);
     const char *loop_cond;
     if (k.vsize == 0) {
@@ -46,26 +48,13 @@ void dot_generator::gen_kernel_body(generator &gen) {
 }
 
 std::vector<kernel_arg> get_dot_args() {
-    return std::vector<kernel_arg>{{karg_type::input_plio, "x", 128},
-                                   {karg_type::input_plio, "y", 128},
+    return std::vector<kernel_arg>{{karg_type::input_plio, "x", 1},
+                                   {karg_type::input_plio, "y", 1},
                                    {karg_type::output_plio, "out", 0}};
 }
 
 void dot_generator::gen_mm2s(generator &gen) {
-    unsigned bits;
-    switch (k.type) {
-        case dtype::float32:
-        case dtype::int32:
-            bits = 32;
-            break;
-        case dtype::float64:
-        case dtype::int64:
-            bits = 64;
-            break;
-        default:
-            bits = 0;
-            break;
-    }
+    unsigned bits = datatype_to_bits(k.type);
 
     if (x.type != connection_type::host &&
         y.type != connection_type::host) {
@@ -138,20 +127,7 @@ void dot_generator::gen_mm2s(generator &gen) {
 }
 
 void dot_generator::gen_s2mm(generator &gen) {
-    unsigned bits;
-    switch (k.type) {
-        case dtype::float32:
-        case dtype::int32:
-            bits = 32;
-            break;
-        case dtype::float64:
-        case dtype::int64:
-            bits = 64;
-            break;
-        default:
-            bits = 0;
-            break;
-    }
+    unsigned bits = datatype_to_bits(k.type);
 
     if (out.type != connection_type::host) {
         return;

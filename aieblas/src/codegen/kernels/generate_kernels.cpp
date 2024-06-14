@@ -49,9 +49,6 @@ void generate_kernel_src(generator &gen, kernel_generator &kernel_gen,
                          const kernel &kernel) {
     gen.println("#include \"{}.hpp\"", kernel.user_name);
     gen.println("");
-    /* TODO: ideal number of samples? */
-    gen.println("#define NUM_SAMPLES {}", num_samples);
-    gen.println("");
 
     gen.print<generator::INCREASE_AFTER>("void {}(", kernel.user_name);
     kernel_gen.gen_kernel_args(gen);

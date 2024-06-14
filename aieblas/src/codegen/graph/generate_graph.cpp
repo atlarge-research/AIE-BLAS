@@ -78,11 +78,11 @@ static inline void generate_graph_hdr(generator &gen) {
         for (const kernel_arg &arg : kernel_gen->get_kernel_args()) {
             std::string type;
             std::string name;
-            if (arg.window_size == 0) {
+            if (arg.dimensions == 0) {
                 type = "stream";
                 name = "";
             } else {
-                type = std::format("window<{}>", arg.window_size);
+                type = std::format("window<{}>", kernel.wsize);
                 name = std::format(" net{}", net_count);
                 net_count++;
             }
