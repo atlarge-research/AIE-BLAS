@@ -9,7 +9,7 @@ namespace aieblas {
 namespace codegen {
 
 enum class blas_op : unsigned {
-    unknown, dot, scale
+    unknown, dot, scal
 };
 
 enum class dtype : unsigned {
@@ -58,8 +58,8 @@ constexpr inline const char *blas_op_to_str(blas_op op) {
     switch (op) {
     case blas_op::dot:
         return "dot";
-    case blas_op::scale:
-        return "scale";
+    case blas_op::scal:
+        return "scal";
     default:
         return "unknown";
     }
@@ -68,8 +68,8 @@ constexpr inline const char *blas_op_to_str(blas_op op) {
 inline blas_op blas_op_from_str(const std::string_view str) {
     if (str == "dot") {
         return blas_op::dot;
-    } else if (str == "scale") {
-        return blas_op::scale;
+    } else if (str == "scal") {
+        return blas_op::scal;
     } else {
         return blas_op::unknown;
     }

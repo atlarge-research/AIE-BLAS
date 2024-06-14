@@ -50,7 +50,7 @@ set(AIEBLAS_CODEGEN_HEADERS
     "${AIEBLAS_INT_HDR}/codegen/generator.hpp"
     "${AIEBLAS_INT_HDR}/codegen/json_parser.hpp"
     "${AIEBLAS_INT_HDR}/codegen/kernels.hpp"
-    "${AIEBLAS_INT_HDR}/codegen/kernels/scale.hpp"
+    "${AIEBLAS_INT_HDR}/codegen/kernels/scal.hpp"
     "${AIEBLAS_INT_HDR}/codegen/kernels/dot.hpp"
 )
 
@@ -66,7 +66,7 @@ add_library(codegen STATIC
     "${AIEBLAS_SRC}/codegen/graph/generate_graph.cpp"
     "${AIEBLAS_SRC}/codegen/kernels/generate_kernels.cpp"
     "${AIEBLAS_SRC}/codegen/kernels/get_kernel_generator.cpp"
-    "${AIEBLAS_SRC}/codegen/kernels/impl/scale.cpp"
+    "${AIEBLAS_SRC}/codegen/kernels/impl/scal.cpp"
     "${AIEBLAS_SRC}/codegen/kernels/impl/dot.cpp"
     "${AIEBLAS_SRC}/codegen/pl_kernels/generate_pl_kernels.cpp"
     ${AIEBLAS_COMMON_SRC}
