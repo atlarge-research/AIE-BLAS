@@ -185,7 +185,7 @@ void generator::parse_json(fs::path json_file) {
             const kernel_parameter &param = {krnl.user_name, arg.name};
             connection conn;
 
-            if (arg.type == karg_type::input_plio) {
+            if (arg.type == karg_type::input) {
                 // search by value
                 auto it = std::find_if(
                     std::begin(connections), std::end(connections),
@@ -198,7 +198,7 @@ void generator::parse_json(fs::path json_file) {
                     conn.kernel = it->first.kernel;
                     conn.parameter = it->first.parameter;
                 }
-            } else if (arg.type == karg_type::output_plio) {
+            } else if (arg.type == karg_type::output) {
                 // search by key
                 if (connections.contains(param)) {
                     const kernel_parameter &p = connections[param];

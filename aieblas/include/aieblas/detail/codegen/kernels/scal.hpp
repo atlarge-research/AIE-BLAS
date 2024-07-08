@@ -16,10 +16,13 @@ public:
 
     virtual ~scal_generator() {}
 
+    void gen_kernel_glob(generator &gen) override;
     void gen_kernel_args(generator &gen) override;
     void gen_kernel_body(generator &gen) override;
 
+    bool need_mm2s() const override;
     void gen_mm2s(generator &gen) override;
+    bool need_s2mm() const override;
     void gen_s2mm(generator &gen) override;
 
     void gen_link(generator &gen) override;

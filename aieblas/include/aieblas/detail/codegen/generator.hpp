@@ -109,6 +109,13 @@ class generator {
         indented = false;
     }
 
+    template <unsigned opts = NO_OPTS>
+    inline void println() {
+        // Empty lines don't need indent, and if this is used to end a
+        // previously written line then NO_INDENT has no effect.
+        this->println<opts | NO_INDENT>("");
+    }
+
     private:
     void parse_json(fs::path json);
     void generate_kernel(const kernel &kernel, const fs::path &kernel_dir);

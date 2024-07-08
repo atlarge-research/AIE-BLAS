@@ -6,51 +6,92 @@ namespace aieblas {
 namespace codegen {
 namespace generators {
 
+void dot_generator::gen_kernel_glob(generator &gen) {
+    const unsigned num_samples = k.wsize * 8 / datatype_to_bits(k.type);
+    gen.println("#define NUM_SAMPLES {}", num_samples);
+    gen.println();
+    gen.print("uint64 chess_storage(%chess_alignof(v4int64)) counter[4] = "
+              "{{0, 0, 0, 0}}");
+    const auto native_type = datatype_to_native_type(k.type, k.vsize);
+    gen.print("{0} chess_storage(%chess_alignof({1})) result_storage[{2}] = {{",
+              datatype_to_str(k.type), std::get<1>(native_type),
+              std::get<0>(native_type));
+    for (std::size_t i = 0; i < std::get<0>(native_type); ++i) {
+        if (i != 0) {
+            gen.print(", 0");
+        } else {
+            gen.print("0");
+        }
+    }
+    gen.println("}};");
+}
+
 void dot_generator::gen_kernel_args(generator &gen) {
-    gen.print("input_window<{0}> *x, output_window<{0}> *y, "
-              "output_stream<{0}> *out", datatype_to_str(k.type));
+    gen.print("input_stream<uint64> *__restrict in_size_n, "
+              "input_window<{0}> *__restrict x, "
+              "input_window<{0}> *__restrict y, "
+              "output_stream<{0}> *__restrict out", datatype_to_str(k.type));
 }
 
 void dot_generator::gen_kernel_body(generator &gen) {
-    const unsigned num_samples = k.wsize * 8 / datatype_to_bits(k.type);
-    gen.println("constexpr unsigned NUM_SAMPLES = {};", num_samples);
-    gen.println("{0} c_x, c_y;", dtype);
+    gen.println("uint64 *num_cycles = &counter[0];");
+    gen.println("uint64 *cycle = &counter[1];");
+    gen.println<generator::INCREASE_AFTER>("if (*num_cycles == 0) {{");
+    gen.println("*num_cycles = readincr(in_size_n) / NUM_SAMPLES;");
+    gen.println<generator::DECREASE_BEFORE>("}}");
+    gen.println("{0} &result = *({0} *)result_storage;", dtype);
     const char *loop_cond;
     if (k.vsize == 0) {
-        gen.println("{0} result = 0;", dtype);
         loop_cond = "NUM_SAMPLES";
     } else {
-        gen.println("{0} result = aie::broadcast<{1}, {2}>(0);",
-                    dtype, datatype_to_str(k.type), k.vsize);
-        gen.println("constexpr unsigned NUM_LOOPS = {};",
-                    num_samples / k.vsize);
+        gen.println("constexpr unsigned NUM_LOOPS = NUM_SAMPLES / {};",
+                    k.vsize);
         loop_cond = "NUM_LOOPS";
     }
-    gen.println<generator::NO_INDENT>("");
+    gen.println();
+    gen.println("{0} vx, vy;", dtype);
+    if (k.vsize > 0) {
+        gen.println("aie::accum<{0}, {1}> acc;", datatype_to_accum(k.type),
+                    k.vsize);
+        gen.println("acc.from_vector(result);");
+    }
     gen.println<generator::INCREASE_AFTER>("for (unsigned i = 0; "
                                            "i < {}; i++) {{", loop_cond);
     if (k.vsize == 0) {
-        gen.println("window_readincr(x, c_x);");
-        gen.println("window_readincr(y, c_y);");
-        gen.println("result += c_x * c_y;");
+        gen.println("vx = window_readincr(x);");
+        gen.println("vy = window_readincr(y);");
+        gen.println("result += vx * vy;");
     } else {
-        gen.println("c_x = window_read_v<{}>(x);", k.vsize);
-        gen.println("c_y = window_read_v<{}>(y);", k.vsize);
-        gen.println("result = aie::add(aie::mul(c_x, c_y), result);");
+        gen.println("vx = window_readincr_v<{}>(x);", k.vsize);
+        gen.println("vy = window_readincr_v<{}>(y);", k.vsize);
+        gen.println("acc = aie::mac(acc, vx, vy);");
     }
     gen.println<generator::DECREASE_BEFORE>("}}");
-    gen.println("");
+    gen.println();
+
+    if (k.vsize > 0) {
+        gen.println("result = acc.to_vector<{}>();", datatype_to_str(k.type));
+    }
+    gen.println("*cycle += 1;");
+    gen.println();
+    gen.println<generator::INCREASE_AFTER>("if (*cycle == *num_cycles) {{");
     if (k.vsize == 0) {
         gen.println("writeincr(out, result);");
     } else {
         gen.println("writeincr(out, aie::reduce_add_v(result));");
     }
+    gen.println<generator::DECREASE_BEFORE>("}}");
 }
 
 std::vector<kernel_arg> get_dot_args() {
-    return std::vector<kernel_arg>{{karg_type::input_plio, "x", 1},
-                                   {karg_type::input_plio, "y", 1},
-                                   {karg_type::output_plio, "out", 0}};
+    return std::vector<kernel_arg>{{karg_type::input, "x", 1},
+                                   {karg_type::input, "y", 1},
+                                   {karg_type::output, "out", 0}};
+}
+
+bool dot_generator::need_mm2s() const {
+    return x.type == connection_type::host
+        || y.type == connection_type::host;
 }
 
 void dot_generator::gen_mm2s(generator &gen) {
@@ -58,7 +99,7 @@ void dot_generator::gen_mm2s(generator &gen) {
 
     if (x.type != connection_type::host &&
         y.type != connection_type::host) {
-        return;
+        throw std::runtime_error("Internal error: mm2s not needed");
     }
 
     gen.print<generator::INCREASE_AFTER>("void {}_mm2s(", k.user_name);
@@ -101,7 +142,7 @@ void dot_generator::gen_mm2s(generator &gen) {
                                           "port = size bundle = control");
     gen.println<generator::NO_INDENT>("#pragma HLS interface s_axilite "
                                       "port = return bundle = control");
-    gen.println("");
+    gen.println();
 
     gen.println("// Send data over stream");
     gen.println<generator::INCREASE_AFTER>("for (int i = 0; i < size; i++) "
@@ -126,11 +167,15 @@ void dot_generator::gen_mm2s(generator &gen) {
     gen.println<generator::DECREASE_BEFORE>("}}");
 }
 
+bool dot_generator::need_s2mm() const {
+    return out.type == connection_type::host;
+}
+
 void dot_generator::gen_s2mm(generator &gen) {
     unsigned bits = datatype_to_bits(k.type);
 
     if (out.type != connection_type::host) {
-        return;
+        throw std::runtime_error("Internal error: mm2s not needed");
     }
 
     gen.println<generator::INCREASE_AFTER>(
@@ -142,12 +187,12 @@ void dot_generator::gen_s2mm(generator &gen) {
                                       "port = mem offset = slave");
     gen.println<generator::NO_INDENT>("#pragma HLS interface axis "
                                       "port = stream_out");
-    gen.println("");
+    gen.println();
     gen.println<generator::NO_INDENT>("#pragma HLS INTERFACE s_axilite "
                                       "port = mem bundle = control");
     gen.println<generator::NO_INDENT>("#pragma HLS interface s_axilite "
                                       "port = return bundle = control");
-    gen.println("");
+    gen.println();
 
     gen.println("// Retrieve data from out stream");
     gen.println("*mem = stream_out.read();", bits);
@@ -162,7 +207,7 @@ void dot_generator::gen_link(generator &gen) {
     if (out.type == connection_type::host) {
         gen.println("nk={0}_s2mm:1:{0}_s2mm", k.user_name);
     }
-    gen.println("");
+    gen.println();
     if (x.type == connection_type::host) {
         gen.println("sc={0}_mm2s.stream_x:ai_engine_0.{0}_x", k.user_name);
     }
@@ -172,11 +217,8 @@ void dot_generator::gen_link(generator &gen) {
     }
     if (out.type == connection_type::host) {
         gen.println("sc=ai_engine_0.{0}_out:{0}_s2mm.stream_out", k.user_name);
-    } else if (out.type == connection_type::kernel) {
-        gen.println("sc=ai_engine_0.{}_out:ai_engine_0.{}_{}", k.user_name,
-                    out.kernel, out.parameter);
     }
-    gen.println("");
+    gen.println();
     if (x.type == connection_type::host ||
         y.type == connection_type::host) {
         gen.println("slr={0}_mm2s:SLR0", k.user_name);
@@ -184,7 +226,7 @@ void dot_generator::gen_link(generator &gen) {
     if (out.type == connection_type::host) {
         gen.println("slr={0}_s2mm:SLR0", k.user_name);
     }
-    gen.println("");
+    gen.println();
     if (x.type == connection_type::host ||
         y.type == connection_type::host) {
         gen.println("sp={0}_mm2s.m_axi_gmem:MC_NOC0", k.user_name);

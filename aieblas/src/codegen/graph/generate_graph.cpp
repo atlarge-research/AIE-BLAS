@@ -11,9 +11,9 @@ static inline void generate_graph_hdr(generator &gen) {
         gen.println("#include \"kernels/{}.hpp\"", kernel.user_name);
     }
 
-    gen.println("");
+    gen.println();
     gen.println("using namespace adf;");
-    gen.println("");
+    gen.println();
 
     gen.println<generator::INCREASE_AFTER>("class simpleGraph : public graph "
                                            "{{");
@@ -23,19 +23,21 @@ static inline void generate_graph_hdr(generator &gen) {
         gen.println("kernel {}k;", kernel.user_name);
     }
 
-    gen.println("");
+    gen.println();
     gen.println<generator::NO_INDENT>("public:");
 
     for (const kernel &kernel : gen.get_data().kernels) {
         std::unique_ptr<kernel_generator> kernel_gen =
                 get_kernel_generator(kernel);
         for (const kernel_arg &arg : kernel_gen->get_kernel_args()) {
-            gen.println("{} {}_{};", kernel_arg_type_to_str(arg.type),
-                        kernel.user_name, arg.name);
+            if (kernel.connections.at(arg.name).type == connection_type::host) {
+                gen.println("{} {}_{};", kernel_arg_type_to_str(arg.type),
+                            kernel.user_name, arg.name);
+            }
         }
     }
 
-    gen.println("");
+    gen.println();
     gen.println<generator::INCREASE_AFTER>("simpleGraph() {{");
 
     for (const kernel &kernel : gen.get_data().kernels) {
@@ -43,29 +45,19 @@ static inline void generate_graph_hdr(generator &gen) {
                 get_kernel_generator(kernel);
         gen.println("// initialize {}", kernel.user_name);
         for (const kernel_arg &arg : kernel_gen->get_kernel_args()) {
-            std::string plio_type;
-            switch (kernel.type) {
-                case dtype::float32:
-                case dtype::int32:
-                    plio_type = "plio_32_bits";
-                    break;
-                case dtype::float64:
-                case dtype::int64:
-                    plio_type = "plio_64_bits";
-                    break;
-                default:
-                    plio_type = "unknown";
-                    break;
-            }
+            if (kernel.connections.at(arg.name).type == connection_type::host) {
+                std::string plio_type = std::format("plio_{}_bits",
+                        datatype_to_bits(kernel.type));
 
-            gen.println("{1}_{2} = {0}::create(\"{1}_{2}\", {3}, \"data/"
-                        "{1}_{2}.txt\");", kernel_arg_type_to_str(arg.type),
-                        kernel.user_name, arg.name, plio_type);
+                gen.println("{1}_{2} = {0}::create(\"{1}_{2}\", {3}, \"data/"
+                            "{1}_{2}.txt\");", kernel_arg_type_to_str(arg.type),
+                            kernel.user_name, arg.name, plio_type);
+            }
         }
 
-        gen.println("");
+        gen.println();
         gen.println("{0}k = kernel::create({0});", kernel.user_name);
-        gen.println("");
+        gen.println();
     }
 
     unsigned net_count = 0;
@@ -77,34 +69,79 @@ static inline void generate_graph_hdr(generator &gen) {
         gen.println("// connect {}", kernel.user_name);
         for (const kernel_arg &arg : kernel_gen->get_kernel_args()) {
             std::string type;
-            std::string name;
-            if (arg.dimensions == 0) {
+            std::string name = std::format(" net{}", net_count);
+            net_count++;
+            if (arg.dimensions == 0 || kernel.wsize == 0) {
                 type = "stream";
-                name = "";
             } else {
                 type = std::format("window<{}>", kernel.wsize);
-                name = std::format(" net{}", net_count);
-                net_count++;
             }
 
-            if (arg.type == karg_type::input_plio) {
-                gen.println("connect<{}>{}({}_{}.out[0], {}k.in[{}]);",
-                            type, name, kernel.user_name, arg.name,
-                            kernel.user_name, in_count);
+            const auto &connection = kernel.connections.at(arg.name);
+
+            if (connection.type == connection_type::host) { // mapping to PLIO
+                if (arg.type == karg_type::input) {
+                    gen.println("connect<{}>{}({}_{}.out[0], {}k.in[{}]);",
+                                type, name, kernel.user_name, arg.name,
+                                kernel.user_name, in_count);
+                } else {
+                    gen.println("connect<{}>{}({}k.out[{}], {}_{}.in[0]);",
+                                type, name, kernel.user_name, out_count,
+                                kernel.user_name, arg.name);
+                }
+            } else if (arg.type == karg_type::output) { // mapping to ext kernel
+                // find external kernel we are mapping against
+                const auto &kernels = gen.get_data().kernels;
+                auto cond = [&connection](const codegen::kernel &k) -> bool {
+                    return k.user_name == connection.kernel;
+                };
+                auto it = std::find_if(kernels.begin(), kernels.end(), cond);
+                if (it == kernels.end()) {
+                    log(log_level::error, "Unknown kernel \"{}\"",
+                        connection.kernel);
+                    throw std::runtime_error("Unknown kernel");
+                }
+                unsigned ext_in_count = 0;
+                unsigned ext_out_count = 0;
+
+                // find external kernel argument with correct in/out index
+                for (const auto &ext_arg : get_kernel_args(it->operation)) {
+                    if (ext_arg.name == connection.parameter) {
+                        break;
+                    }
+
+                    if (ext_arg.type == karg_type::input) {
+                        ext_in_count++;
+                    } else {
+                        ext_out_count++;
+                    }
+                }
+
+                if (arg.type == karg_type::input) {
+                    gen.println("connect<{}>{}({}k.out[{}], {}k.in[{}]);",
+                                type, name, it->user_name, ext_out_count,
+                                kernel.user_name, in_count);
+                } else {
+                    gen.println("connect<{}>{}({}k.out[{}], {}k.in[{}]);",
+                                type, name, kernel.user_name, out_count,
+                                it->user_name, ext_out_count);
+                }
+            }
+            // Input connections to other kernels are defined by the other
+            // kernel
+
+            if (arg.type == karg_type::input) {
                 in_count++;
             } else {
-                gen.println("connect<{}>{}({}k.out[{}], {}_{}.in[0]);",
-                            type, name, kernel.user_name, out_count,
-                            kernel.user_name, arg.name);
                 out_count++;
             }
         }
 
-        gen.println("");
+        gen.println();
         gen.println("source({0}k) = \"kernels/{0}.cpp\";",
                     kernel.user_name);
         gen.println("runtime<ratio>({}k) = 0.9;", kernel.user_name);
-        gen.println("");
+        gen.println();
     }
 
     gen.println<generator::DECREASE_BEFORE>("}}");
@@ -113,25 +150,25 @@ static inline void generate_graph_hdr(generator &gen) {
 
 static inline void generate_graph_src(generator &gen) {
     gen.println("#include \"graph.hpp\"");
-    gen.println("");
+    gen.println();
     gen.println("simpleGraph mygraph;");
-    gen.println("");
+    gen.println();
     gen.println<generator::INCREASE_AFTER>("int main (void) {{");
     gen.println("adf::return_code ret;");
     gen.println("mygraph.init();");
-    gen.println("");
+    gen.println();
     gen.println("ret = mygraph.run(1);");
     gen.println<generator::INCREASE_AFTER>("if (ret != adf::ok) {{");
     gen.println("printf(\"Run failed\\n\");");
     gen.println("return ret;");
     gen.println<generator::DECREASE_BEFORE>("}}");
-    gen.println("");
+    gen.println();
     gen.println("ret = mygraph.end();");
     gen.println<generator::INCREASE_AFTER>("if (ret != adf::ok) {{");
     gen.println("printf(\"End failed\\n\");");
     gen.println("return ret;");
     gen.println<generator::DECREASE_BEFORE>("}}");
-    gen.println("");
+    gen.println();
     gen.println("return 0;");
     gen.println<generator::DECREASE_BEFORE>("}}");
 }

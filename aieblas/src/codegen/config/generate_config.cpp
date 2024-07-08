@@ -17,7 +17,7 @@ void generator::generate_config() {
 
     this->open(cfg_file, comment_type::HASHTAG);
     this->println("platform={}", this->d.platform);
-    this->println("");
+    this->println();
 
     if (this->d.profile) {
         this->println("[profile]");
@@ -27,13 +27,13 @@ void generator::generate_config() {
                       "kernels");
         this->println("exec=all:all     # Monitor execution times for all CUs");
         this->println("aie=all          # Monitor all AIE streams");
-        this->println("");
+        this->println();
     }
 
     this->println("[connectivity]");
     for (const kernel &kernel : this->d.kernels) {
         generate_config_kernel(*this, kernel);
-        this->println("");
+        this->println();
     }
     this->close();
 }

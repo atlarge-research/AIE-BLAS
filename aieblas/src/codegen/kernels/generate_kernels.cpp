@@ -48,7 +48,10 @@ void generator::generate_kernels() {
 void generate_kernel_src(generator &gen, kernel_generator &kernel_gen,
                          const kernel &kernel) {
     gen.println("#include \"{}.hpp\"", kernel.user_name);
-    gen.println("");
+    gen.println();
+
+    kernel_gen.gen_kernel_glob(gen);
+    gen.println();
 
     gen.print<generator::INCREASE_AFTER>("void {}(", kernel.user_name);
     kernel_gen.gen_kernel_args(gen);
@@ -62,7 +65,7 @@ void generate_kernel_hdr(generator &gen, kernel_generator &kernel_gen,
     gen.println("#pragma once");
     gen.println("#include \"aie_api/aie.hpp\"");
     gen.println("#include \"aie_api/aie_adf.hpp\"");
-    gen.println("");
+    gen.println();
 
     gen.print<generator::INCREASE_AFTER>("void {}(", kernel.user_name);
     kernel_gen.gen_kernel_args(gen);

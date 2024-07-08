@@ -25,7 +25,7 @@ static inline void generate_header(generator &gen,
                 "{}:{}", comment_start, 1900 + tstruct.tm_year,
                 1 + tstruct.tm_mon, tstruct.tm_mday, tstruct.tm_hour,
                 tstruct.tm_min);
-    gen.println("");
+    gen.println();
 }
 
 void generator::open(fs::path filename, comment_type comment_type) {

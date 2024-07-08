@@ -7,6 +7,12 @@
 #include <version>
 #endif
 
+#ifdef __GNUC__
+#define CXX_COMPAT_ALWAYS_INLINE __attribute__((always_inline)) static inline
+#else
+#define CXX_COMPAT_ALWAYS_INLINE static inline
+#endif
+
 /**
  * Create a definition for std::format from C++20.
  * Uses the {fmt} format library, which is mostly compatible with std::format.
@@ -19,7 +25,8 @@
 namespace std {
 template <class... Args> using format_string = std::string_view;
 template <typename... Args>
-static inline std::string format(format_string<Args...> fmt, Args &&...args) {
+CXX_COMPAT_ALWAYS_INLINE std::string format(format_string<Args...> fmt,
+                                            Args &&...args) {
     return fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
 }
 } // namespace std
@@ -34,7 +41,7 @@ static inline std::string format(format_string<Args...> fmt, Args &&...args) {
 #define CXX_COMPAT_NEEDS_RUNTIME_FORMAT 1
 namespace std {
 template <typename T>
-static inline const T &runtime_format(const T &fmt) {
+CXX_COMPAT_ALWAYS_INLINE const T &runtime_format(const T &fmt) {
     return fmt;
 }
 } // namespace std
@@ -49,33 +56,37 @@ static inline const T &runtime_format(const T &fmt) {
 #define CXX_COMPAT_NEEDS_PRINT 1
 namespace std {
 template <typename... Args>
-static inline void print(std::ostream &stream, std::format_string<Args...> fmt,
-                         Args &&...args) {
+CXX_COMPAT_ALWAYS_INLINE void print(std::ostream &stream,
+                                    std::format_string<Args...> fmt,
+                                    Args &&...args) {
     stream << std::format(std::runtime_format(fmt),
                           std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-static inline void print(std::format_string<Args...> fmt, Args &&...args) {
+CXX_COMPAT_ALWAYS_INLINE void print(std::format_string<Args...> fmt,
+                                    Args &&...args) {
     print(std::cout, std::runtime_format(fmt), std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-static inline void println(std::ostream &stream,
-                           std::format_string<Args...> fmt, Args &&...args) {
+CXX_COMPAT_ALWAYS_INLINE void println(std::ostream &stream,
+                                      std::format_string<Args...> fmt,
+                                      Args &&...args) {
     stream << std::format(std::runtime_format(fmt),
                           std::forward<Args>(args)...) << "\n";
 }
 
 template <typename... Args>
-static inline void println(std::format_string<Args...> fmt, Args &&...args) {
+CXX_COMPAT_ALWAYS_INLINE void println(std::format_string<Args...> fmt,
+                                      Args &&...args) {
     println(std::cout, std::runtime_format(fmt), std::forward<Args>(args)...);
 }
 } // namespace std
 #endif
 
 namespace cxx_compat {
-static inline void print_features() {
+CXX_COMPAT_ALWAYS_INLINE void print_features() {
     bool supports_format = true;
 #ifdef CXX_COMPAT_NEEDS_FORMAT
     supports_format = false;

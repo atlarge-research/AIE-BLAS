@@ -17,6 +17,8 @@ public:
 
     virtual ~kernel_generator() {}
 
+
+    virtual void gen_kernel_glob(generator &gen) = 0;
     virtual void gen_kernel_args(generator &gen) = 0;
     virtual void gen_kernel_body(generator &gen) = 0;
 
@@ -24,7 +26,9 @@ public:
         return ::aieblas::codegen::get_kernel_args(k.operation);
     }
 
+    virtual bool need_mm2s() const = 0;
     virtual void gen_mm2s(generator &gen) = 0;
+    virtual bool need_s2mm() const = 0;
     virtual void gen_s2mm(generator &gen) = 0;
 
     virtual void gen_link(generator &gen) = 0;

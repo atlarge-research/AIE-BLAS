@@ -11,20 +11,20 @@ void generator::generate_cmake() {
 
     this->open(cmake_file, comment_type::HASHTAG);
     this->println("cmake_minimum_required(VERSION 3.22)");
-    this->println("");
+    this->println();
     this->println("project(aieblas)");
-    this->println("");
+    this->println();
 
     this->println<INCREASE_AFTER>("if (NOT EXISTS $ENV{{XILINX_VITIS}})");
     this->println("message(FATAL_ERROR \"Xilinx Vitis not found, make sure to "
                   "source setup.sh\")");
     this->println<DECREASE_BEFORE>("endif ()");
-    this->println("");
+    this->println();
 
     this->println("set(PLATFORM /opt/xilinx/platforms/{0}/{0}.xpfm)",
                   this->d.platform);
     this->println("set(PL_FREQ 500)"); // TODO: Make variable?
-    this->println("");
+    this->println();
 
     this->println<INCREASE_AFTER>("set(AIE_KERNELS");
     for (const fs::path &src : this->kernel_srcs) {
@@ -40,7 +40,7 @@ void generator::generate_cmake() {
         this->println("{}", fs::relative(krnl, out_dir).native());
     }
     this->println<DECREASE_BEFORE>(")");
-    this->println("");
+    this->println();
 
     this->println("set(VPP \"$ENV{{XILINX_VITIS}}/bin/v++\")");
     this->println("set(AIECC \"$ENV{{XILINX_VITIS}}/aietools/bin/"
@@ -49,7 +49,7 @@ void generator::generate_cmake() {
                   "aiesimulator\")");
     this->println("set(X86SIM \"$ENV{{XILINX_VITIS}}/aietools/bin/"
                   "x86simulator\")");
-    this->println("");
+    this->println();
 
     this->println("set(AIE_INCLUDE "
                   "\"-include=\\\"$ENV{{XILINX_VITIS}}/aietools/include\\\"\" "
@@ -58,23 +58,24 @@ void generator::generate_cmake() {
                   "\"-include=\\\"${{CMAKE_CURRENT_SOURCE_DIR}}/aie/"
                   "kernels\\\"\")");
     this->println("set(AIE_FLAGS ${{AIE_INCLUDE}} --platform ${{PLATFORM}} "
-                  "--verbose --pl-freq=${{PL_FREQ}} -log-level=3 "
+                  "--verbose=true --pl-freq=${{PL_FREQ}} -log-level=5 "
                   "--output=graph.json)");
     this->println("set(VPP_FLAGS --platform ${{PLATFORM}} --save-temps "
                   "--hls.jobs 8 --vivado.synth.jobs 8 --vivado.impl.jobs 8 "
                   "-g -t hw --log_dir log --temp_dir tmp --report_dir report)");
-    this->println("");
+    this->println();
 
     this->println("#######");
     this->println("# AIE #");
     this->println("#######");
-    this->println("");
-    this->println<INCREASE_AFTER>("add_custom_command(");
-    this->println("OUTPUT xilinx");
+    this->println();
+    this->println<INCREASE_AFTER>("add_custom_target(");
+    this->println("xilinx");
     this->println("COMMAND mkdir -p xilinx");
+    this->println("BYPRODUCTS xilinx");
     this->println("VERBATIM");
     this->println<DECREASE_BEFORE>(")");
-    this->println("");
+    this->println();
 
     this->println("# HW / HW emu");
     this->println<INCREASE_AFTER>("add_custom_command(");
@@ -90,7 +91,7 @@ void generator::generate_cmake() {
     this->println("WORKING_DIRECTORY xilinx");
     this->println("VERBATIM");
     this->println<DECREASE_BEFORE>(")");
-    this->println("");
+    this->println();
 
     this->println("# SW emu");
     this->println<INCREASE_AFTER>("add_custom_command(");
@@ -106,17 +107,17 @@ void generator::generate_cmake() {
     this->println("WORKING_DIRECTORY xilinx");
     this->println("VERBATIM");
     this->println<DECREASE_BEFORE>(")");
-    this->println("");
+    this->println();
 
     this->println("######");
     this->println("# PL #");
     this->println("######");
-    this->println("");
+    this->println();
     this->println("set(KERNEL_OBJECTS)");
     this->println("set(KERNEL_OBJECTS_PATH)");
     this->println<INCREASE_AFTER>("foreach(kernel ${{PL_KERNELS}})");
     this->println("get_filename_component(name ${{kernel}} NAME_WE)");
-    this->println("");
+    this->println();
     this->println<INCREASE_AFTER>("add_custom_command(");
     this->println("OUTPUT xilinx/${{name}}.xo");
     this->println("COMMAND ${{VPP}} ${{VPP_FLAGS}} -c -k ${{name}} "
@@ -130,12 +131,12 @@ void generator::generate_cmake() {
     this->println("list(APPEND KERNEL_OBJECTS ${{name}}.xo)");
     this->println("list(APPEND KERNEL_OBJECTS_PATH xilinx/${{name}}.xo)");
     this->println<DECREASE_BEFORE>("endforeach()");
-    this->println("");
+    this->println();
 
     this->println("##########");
     this->println("# XCLBIN #");
     this->println("##########");
-    this->println("");
+    this->println();
     this->println<INCREASE_AFTER>("add_custom_command(");
     this->println("OUTPUT xilinx/aieblas.xsa");
     this->println("COMMAND ${{VPP}} ${{VPP_FLAGS}} -l ${{KERNEL_OBJECTS}} "
@@ -147,7 +148,7 @@ void generator::generate_cmake() {
     this->println("WORKING_DIRECTORY xilinx");
     this->println("VERBATIM");
     this->println<DECREASE_BEFORE>(")");
-    this->println("");
+    this->println();
 
 
     this->println<INCREASE_AFTER>("add_custom_command(");
@@ -159,9 +160,9 @@ void generator::generate_cmake() {
     this->println("WORKING_DIRECTORY xilinx");
     this->println("VERBATIM");
     this->println<DECREASE_BEFORE>(")");
-    this->println("");
+    this->println();
 
-    this->println("");
+    this->println();
     this->println<INCREASE_AFTER>("add_custom_target(aie");
     this->println("COMMAND cp --preserve --update aieblas.xclbin "
                   "${{CMAKE_BINARY_DIR}}/aieblas.xclbin");

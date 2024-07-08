@@ -13,11 +13,11 @@ enum class blas_op : unsigned {
 };
 
 enum class dtype : unsigned {
-    unknown, int32, int64, float32, float64
+    unknown, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32
 };
 
 enum class karg_type : unsigned {
-    unknown, input_plio, output_plio
+    unknown, input, output
 };
 
 struct kernel_arg {
@@ -78,40 +78,126 @@ inline blas_op blas_op_from_str(const std::string_view str) {
 
 constexpr inline const char *datatype_to_str(dtype type) {
     switch (type) {
+    case dtype::int8:
+        return "int8";
+    case dtype::int16:
+        return "int16";
     case dtype::int32:
         return "int32";
     case dtype::int64:
         return "int64";
+    case dtype::uint8:
+        return "int8";
+    case dtype::uint16:
+        return "int16";
+    case dtype::uint32:
+        return "int32";
+    case dtype::uint64:
+        return "int64";
     case dtype::float32:
         return "float";
-    case dtype::float64:
-        return "double";
     default:
         return "unknown";
     }
 }
 
 inline dtype datatype_from_str(const std::string_view str) {
-    if (str == "int32") {
+    if (str == "int8") {
+        return dtype::int8;
+    } else if (str == "int16") {
+        return dtype::int16;
+    } else if (str == "int32") {
         return dtype::int32;
     } else if (str == "int64") {
-        return dtype::int32;
+        return dtype::int64;
+    } else if (str == "uint8") {
+        return dtype::uint8;
+    } else if (str == "uint16") {
+        return dtype::uint16;
+    } else if (str == "uint32") {
+        return dtype::uint32;
+    } else if (str == "uint64") {
+        return dtype::uint64;
     } else if (str == "float" || str == "float32") {
         return dtype::float32;
-    } else if (str == "double" || str == "float64") {
-        return dtype::float64;
     } else {
         return dtype::unknown;
     }
 }
 
+inline std::tuple<std::size_t, std::string>
+datatype_to_native_type(dtype type, std::size_t min_vecsize) {
+    const char *base = datatype_to_str(type);
+    std::vector<std::size_t> sizes;
+    switch (type) {
+        case dtype::int8:
+        case dtype::uint8:
+            sizes = {16, 32, 64};
+            break;
+        case dtype::int16:
+        case dtype::uint16:
+            sizes = {16, 32, 64};
+            break;
+        case dtype::int32:
+        case dtype::uint32:
+            sizes = {4, 8, 16, 32};
+            break;
+        case dtype::float32:
+            sizes = {8, 16, 32};
+            break;
+        case dtype::int64:
+        case dtype::uint64:
+            sizes = {4, 8, 16};
+            break;
+        default:
+            base = "";
+            sizes = {};
+            break;
+    }
+
+    std::size_t size = 0;
+    for (const auto &pos_size : sizes) {
+        if (min_vecsize <= pos_size) {
+            size = pos_size;
+        }
+    }
+
+    return {size, std::format("v{}{}", size, base)};
+}
+
+constexpr inline const char *datatype_to_accum(dtype type) {
+    switch (type) {
+        case dtype::int8:
+        case dtype::uint8:
+        case dtype::int16:
+        case dtype::uint16:
+        case dtype::int32:
+        case dtype::uint32:
+            return "acc48";
+        case dtype::float32:
+            return "accfloat";
+        case dtype::int64:
+        case dtype::uint64:
+            return "acc80";
+        default:
+            return 0;
+    }
+}
+
 constexpr inline unsigned datatype_to_bits(dtype type) {
     switch (type) {
-        case dtype::float32:
+        case dtype::int8:
+        case dtype::uint8:
+            return 8;
+        case dtype::int16:
+        case dtype::uint16:
+            return 16;
         case dtype::int32:
+        case dtype::uint32:
+        case dtype::float32:
             return 32;
-        case dtype::float64:
         case dtype::int64:
+        case dtype::uint64:
             return 64;
         default:
             return 0;
@@ -120,9 +206,9 @@ constexpr inline unsigned datatype_to_bits(dtype type) {
 
 constexpr inline const char *kernel_arg_type_to_str(karg_type karg) {
     switch (karg) {
-    case karg_type::input_plio:
+    case karg_type::input:
         return "input_plio";
-    case karg_type::output_plio:
+    case karg_type::output:
         return "output_plio";
     default:
         return "unknown";
@@ -131,9 +217,9 @@ constexpr inline const char *kernel_arg_type_to_str(karg_type karg) {
 
 inline karg_type kernel_arg_type_from_str(const std::string_view str) {
     if (str == "input_plio") {
-        return karg_type::input_plio;
+        return karg_type::input;
     } else if (str == "output_plio") {
-        return karg_type::output_plio;
+        return karg_type::output;
     } else {
         return karg_type::unknown;
     }
