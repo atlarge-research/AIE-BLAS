@@ -11,8 +11,5 @@ namespace codegen {
 
 void generate_graph(generator &gen);
 
-void generate_kernel_hdr(generator &gen, kernel_generator &kernel_gen,
-                         const kernel &kernel);
-
 } // codegen
 } // aieblas

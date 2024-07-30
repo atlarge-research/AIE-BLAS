@@ -1,10 +1,12 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "aieblas/detail/codegen/generator.hpp"
 #include "aieblas/detail/codegen/json_parser.hpp"
+#include "aieblas/detail/codegen/json_parser/get_kernel_options.hpp"
 #include "aieblas/detail/codegen/kernels.hpp"
 #include "aieblas/detail/util.hpp"
 
@@ -110,7 +112,13 @@ void generator::parse_json(fs::path json_file) {
 
     for (std::size_t i = 0; i < n_kernels; ++i) {
         json &item = kernels[i];
-        kernel krnl;
+        blas_op operation;
+        std::string user_name;
+        dtype type;
+        unsigned vsize;
+        unsigned wsize;
+        std::unordered_map<std::string, connection> connections_map;
+        std::unique_ptr<kernel_options> extra_options;
 
         if (!item.is_object()) {
             throw parse_error(
@@ -125,9 +133,9 @@ void generator::parse_json(fs::path json_file) {
         }
 
         std::string blas_op_str = item["blas_op"].get<std::string>();
-        krnl.operation = blas_op_from_str(blas_op_str);
+        operation = blas_op_from_str(blas_op_str);
 
-        if (krnl.operation == blas_op::unknown) {
+        if (operation == blas_op::unknown) {
             throw parse_error(std::format(
                 "blas_op '{}' is unknown in kernel {}.", blas_op_str, i));
         }
@@ -140,7 +148,7 @@ void generator::parse_json(fs::path json_file) {
                 std::format("user_name should be a string in kernel {}.", i));
         }
 
-        krnl.user_name = item["user_name"].get<std::string>();
+        user_name = item["user_name"].get<std::string>();
 
         if (!item.count("type")) {
             throw parse_error(std::format("kernel {} is missing 'type'", i));
@@ -149,15 +157,15 @@ void generator::parse_json(fs::path json_file) {
                 std::format("type should be a string in kernel {}.", i));
         }
 
-        std::string type = item["type"].get<std::string>();
-        krnl.type = datatype_from_str(type);
+        std::string type_str = item["type"].get<std::string>();
+        type = datatype_from_str(type_str);
 
-        if (krnl.type == dtype::unknown) {
+        if (type == dtype::unknown) {
             throw parse_error(
-                std::format("type '{}' is unknown in kernel {}.", type, i));
+                std::format("type '{}' is unknown in kernel {}.", type_str, i));
         }
 
-        krnl.vsize = 0;
+        vsize = 0;
         if (item.count("vector_size")) {
             if (!item["vector_size"].is_number_unsigned()) {
                 throw parse_error(std::format(
@@ -165,10 +173,10 @@ void generator::parse_json(fs::path json_file) {
                     i));
             }
 
-            krnl.vsize = item["vector_size"].get<unsigned>();
+            vsize = item["vector_size"].get<unsigned>();
         }
 
-        krnl.wsize = 128;
+        wsize = 128;
         if (item.count("window_size")) {
             if (!item["window_size"].is_number_unsigned()) {
                 throw parse_error(std::format(
@@ -176,16 +184,25 @@ void generator::parse_json(fs::path json_file) {
                     i));
             }
 
-            krnl.wsize = item["window_size"].get<unsigned>();
+            wsize = item["window_size"].get<unsigned>();
         }
 
-        const std::vector<kernel_arg> args = get_kernel_args(krnl.operation);
+        if (item.count("extra")) {
+            extra_options = get_kernel_options(operation, item["extra"]);
+        } else {
+            extra_options = get_kernel_options(operation, json::object());
+        }
+
+        const std::vector<kernel_arg> args = get_kernel_args(operation);
 
         for (const kernel_arg &arg : args) {
-            const kernel_parameter &param = {krnl.user_name, arg.name};
+            const kernel_parameter &param = {user_name, arg.name};
             connection conn;
 
-            if (arg.type == karg_type::input) {
+            if (extra_options->disabled_arg(arg.name)) {
+                conn.type = connection_type::none;
+            } else if (arg.type == karg_type::input ||
+                       arg.type == karg_type::input_index) {
                 // search by value
                 auto it = std::find_if(
                     std::begin(connections), std::end(connections),
@@ -212,10 +229,12 @@ void generator::parse_json(fs::path json_file) {
                 throw parse_error("Unsupported karg_type");
             }
 
-            krnl.connections[arg.name] = conn;
+            connections_map[arg.name] = conn;
         }
 
-        this->d.kernels.push_back(krnl);
+        this->d.kernels.emplace_back(operation, std::move(user_name), type,
+                                     vsize, wsize, std::move(connections_map),
+                                     std::move(extra_options));
     }
 }
 

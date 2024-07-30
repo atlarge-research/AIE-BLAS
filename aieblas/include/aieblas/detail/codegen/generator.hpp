@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <fstream>
 
 #include "aieblas/detail/util.hpp"
@@ -12,14 +13,7 @@ namespace codegen {
 
 class generator {
     public:
-    generator(fs::path json, fs::path output) : out_dir(output) {
-        try {
-            parse_json(json);
-        } catch (const parse_error &e) {
-            throw parse_error(std::format("Parsing error from '{}': {}",
-                                          json.native(), e.what()));
-        }
-    }
+    generator(fs::path json, fs::path output);
 
     ~generator() {
         if (cur_file_.is_open()) {
@@ -119,7 +113,6 @@ class generator {
     private:
     void parse_json(fs::path json);
     void generate_kernel(const kernel &kernel, const fs::path &kernel_dir);
-    void generate_pl_kernel(const kernel &kernel, const fs::path &pl_dir);
 
     void print_indent();
 

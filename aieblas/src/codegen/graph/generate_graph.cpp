@@ -46,8 +46,14 @@ static inline void generate_graph_hdr(generator &gen) {
         gen.println("// initialize {}", kernel.user_name);
         for (const kernel_arg &arg : kernel_gen->get_kernel_args()) {
             if (kernel.connections.at(arg.name).type == connection_type::host) {
-                std::string plio_type = std::format("plio_{}_bits",
-                        datatype_to_bits(kernel.type));
+                std::string plio_type;
+                // Manual override to keep index variables 64 bits
+                if (arg.type == karg_type::input_index) {
+                    plio_type = "plio_64_bits";
+                } else {
+                    plio_type= std::format("plio_{}_bits",
+                                           datatype_to_bits(kernel.type));
+                }
 
                 gen.println("{1}_{2} = {0}::create(\"{1}_{2}\", {3}, \"data/"
                             "{1}_{2}.txt\");", kernel_arg_type_to_str(arg.type),
@@ -80,7 +86,8 @@ static inline void generate_graph_hdr(generator &gen) {
             const auto &connection = kernel.connections.at(arg.name);
 
             if (connection.type == connection_type::host) { // mapping to PLIO
-                if (arg.type == karg_type::input) {
+                if (arg.type == karg_type::input ||
+                    arg.type == karg_type::input_index) {
                     gen.println("connect<{}>{}({}_{}.out[0], {}k.in[{}]);",
                                 type, name, kernel.user_name, arg.name,
                                 kernel.user_name, in_count);
@@ -110,14 +117,16 @@ static inline void generate_graph_hdr(generator &gen) {
                         break;
                     }
 
-                    if (ext_arg.type == karg_type::input) {
+                    if (ext_arg.type == karg_type::input ||
+                        ext_arg.type == karg_type::input_index) {
                         ext_in_count++;
                     } else {
                         ext_out_count++;
                     }
                 }
 
-                if (arg.type == karg_type::input) {
+                if (arg.type == karg_type::input ||
+                    arg.type == karg_type::input_index) {
                     gen.println("connect<{}>{}({}k.out[{}], {}k.in[{}]);",
                                 type, name, it->user_name, ext_out_count,
                                 kernel.user_name, in_count);
@@ -126,11 +135,14 @@ static inline void generate_graph_hdr(generator &gen) {
                                 type, name, kernel.user_name, out_count,
                                 it->user_name, ext_out_count);
                 }
+            } else if (connection.type == connection_type::none) {
+                continue; // skip disabled argument
             }
             // Input connections to other kernels are defined by the other
             // kernel
 
-            if (arg.type == karg_type::input) {
+            if (arg.type == karg_type::input ||
+                arg.type == karg_type::input_index) {
                 in_count++;
             } else {
                 out_count++;

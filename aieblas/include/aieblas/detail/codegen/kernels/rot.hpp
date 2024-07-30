@@ -8,32 +8,37 @@ namespace aieblas {
 namespace codegen {
 namespace generators {
 
-class scal_options : public kernel_options {
+class rot_options : public kernel_options {
 public:
-    scal_options(const value &alpha_) : kernel_options(), alpha(alpha_) {}
+    rot_options(const value &c_, const value &s_) : kernel_options() {}
 
-    virtual ~scal_options() {}
+    virtual ~rot_options() {}
 
     bool disabled_arg(const std::string &arg) const override {
-        if (arg == "alpha") {
-            return alpha.set;
+        if (arg == "c") {
+            return c.set;
+        } else if (arg == "s") {
+            return s.set;
         }
 
         return false;
     };
 
-    const value alpha;
+    const value c;
+    const value s;
 };
 
-class scal_generator : public kernel_generator {
+class rot_generator : public kernel_generator {
 public:
-    scal_generator(const kernel &kernel)
+    rot_generator(const kernel &kernel)
     : kernel_generator(kernel), dtype(aie_dtype(kernel.type, kernel.vsize)),
-      x(kernel.connections.at("x")), alpha(kernel.connections.at("alpha")),
-      out((kernel.connections.at("out"))),
-      options(dynamic_cast<scal_options &>(*kernel.extra_options)) {}
+      x(kernel.connections.at("x")), y(kernel.connections.at("y")),
+      c(kernel.connections.at("c")), s(kernel.connections.at("s")),
+      out_x((kernel.connections.at("out_x"))),
+      out_y((kernel.connections.at("out_y"))),
+      options(dynamic_cast<rot_options &>(*kernel.extra_options)) {}
 
-    virtual ~scal_generator() {}
+    virtual ~rot_generator() {}
 
     void gen_kernel_glob(generator &gen) override;
     void gen_kernel_args(generator &gen) override;
@@ -51,13 +56,16 @@ private:
     const std::string dtype;
 
     const connection x;
-    const connection alpha;
-    const connection out;
+    const connection y;
+    const connection c;
+    const connection s;
+    const connection out_x;
+    const connection out_y;
 
-    const scal_options &options;
+    const rot_options &options;
 };
 
-std::vector<kernel_arg> get_scal_args();
+std::vector<kernel_arg> get_rot_args();
 
 } // generators
 } // codegen

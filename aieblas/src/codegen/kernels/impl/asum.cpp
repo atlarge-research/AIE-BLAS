@@ -1,12 +1,12 @@
 #include "aieblas/detail/util.hpp"
-#include "aieblas/detail/codegen/kernels/dot.hpp"
+#include "aieblas/detail/codegen/kernels/asum.hpp"
 
 
 namespace aieblas {
 namespace codegen {
 namespace generators {
 
-void dot_generator::gen_kernel_glob(generator &gen) {
+void asum_generator::gen_kernel_glob(generator &gen) {
     const unsigned num_samples = k.wsize * 8 / datatype_to_bits(k.type);
     gen.println("#define NUM_SAMPLES {}", num_samples);
     gen.println();
@@ -26,14 +26,13 @@ void dot_generator::gen_kernel_glob(generator &gen) {
     gen.println("}};");
 }
 
-void dot_generator::gen_kernel_args(generator &gen) {
+void asum_generator::gen_kernel_args(generator &gen) {
     gen.print("input_stream<uint64> *__restrict in_size_n, "
               "input_window<{0}> *__restrict x, "
-              "input_window<{0}> *__restrict y, "
               "output_stream<{0}> *__restrict out", datatype_to_str(k.type));
 }
 
-void dot_generator::gen_kernel_body(generator &gen) {
+void asum_generator::gen_kernel_body(generator &gen) {
     gen.println("uint64 *num_cycles = &counter[0];");
     gen.println("uint64 *cycle = &counter[1];");
     gen.println<generator::INCREASE_AFTER>("if (*num_cycles == 0) {{");
@@ -49,79 +48,62 @@ void dot_generator::gen_kernel_body(generator &gen) {
         loop_cond = "NUM_LOOPS";
     }
     gen.println();
-    gen.println("{0} vx, vy;", dtype);
+    gen.println("{0} vx;", dtype);
     gen.println<generator::INCREASE_AFTER>("for (unsigned i = 0; "
                                            "i < {}; i++) {{", loop_cond);
     if (k.vsize == 0) {
         gen.println("vx = window_readincr(x);");
-        gen.println("vy = window_readincr(y);");
-        gen.println("result += vx * vy;");
+        gen.println("result += aie::abs(vx);");
     } else {
         gen.println("vx = window_readincr_v<{}>(x);", k.vsize);
-        gen.println("vy = window_readincr_v<{}>(y);", k.vsize);
-        gen.println("result = aie::add(aie::mul(vx, vy).to_vector<{}>(), "
-                    "result);", datatype_to_str(k.type));
+        gen.println("result = aie::add(aie::abs(vx), result);");
     }
     gen.println<generator::DECREASE_BEFORE>("}}");
     gen.println();
-
     gen.println("*cycle += 1;");
     gen.println();
     gen.println<generator::INCREASE_AFTER>("if (*cycle == *num_cycles) {{");
+
     if (k.vsize == 0) {
         gen.println("writeincr(out, result);");
     } else {
         gen.println("writeincr(out, aie::reduce_add(result));");
     }
+
     gen.println<generator::DECREASE_BEFORE>("}}");
 }
 
-std::vector<kernel_arg> get_dot_args() {
+std::vector<kernel_arg> get_asum_args() {
     return std::vector<kernel_arg>{{karg_type::input_index, "in_size_n", 0},
                                    {karg_type::input, "x", 1},
-                                   {karg_type::input, "y", 1},
                                    {karg_type::output, "out", 0}};
 }
 
-bool dot_generator::need_mm2s() const {
+bool asum_generator::need_mm2s() const {
     return true;
 }
 
-void dot_generator::gen_mm2s(generator &gen) {
+void asum_generator::gen_mm2s(generator &gen) {
     unsigned bits = datatype_to_bits(k.type);
 
     gen.print<generator::INCREASE_AFTER>("void {}_mm2s(", k.user_name);
     if (x.type == connection_type::host) {
-        gen.print("ap_int<{0}> *mem_x, ", bits);
-    }
-    if (y.type == connection_type::host) {
-        gen.print("ap_int<{0}> *mem_y, ", bits);
+        gen.print("ap_int<{0}> *mem, ", bits);
     }
     gen.print("int size, ");
     if (x.type == connection_type::host) {
         gen.print("hls::stream<qdma_axis<{0}, 0, 0, 0>> &stream_x, ", bits);
-    }
-    if (y.type == connection_type::host) {
-        gen.print("hls::stream<qdma_axis<{0}, 0, 0, 0>> &stream_y, ", bits);
     }
     gen.print("hls::stream<qdma_axis<64, 0, 0, 0>> &stream_in_size_n");
     gen.println(") {{");
 
     if (x.type == connection_type::host) {
         gen.println<generator::NO_INDENT>("#pragma HLS interface m_axi "
-                                          "port = mem_x offset = slave");
+                                          "port = mem offset = slave");
         gen.println<generator::NO_INDENT>("#pragma HLS interface axis "
                                           "port = stream_x");
         gen.println<generator::NO_INDENT>("#pragma HLS INTERFACE s_axilite "
-                                          "port = mem_x bundle = control");
-    }
-    if (y.type == connection_type::host) {
-        gen.println<generator::NO_INDENT>("#pragma HLS interface m_axi "
-                                          "port = mem_y offset = slave");
-        gen.println<generator::NO_INDENT>("#pragma HLS interface axis "
-                                          "port = stream_y");
-        gen.println<generator::NO_INDENT>("#pragma HLS INTERFACE s_axilite "
-                                          "port = mem_y bundle = control");
+                                          "port = mem bundle = control");
     }
 
     gen.println<generator::NO_INDENT>("#pragma HLS interface axis "
@@ -132,7 +114,7 @@ void dot_generator::gen_mm2s(generator &gen) {
                                       "port = return bundle = control");
     gen.println();
 
-    gen.println("qdma_axis<64,0,0,0> in_size;");
+    gen.println("qdma_axis<64,0,0,0> in_size;", bits);
     gen.println("in_size.data = size;");
     gen.println("in_size.keep_all();");
     gen.println("in_size.set_last(1);");
@@ -145,27 +127,20 @@ void dot_generator::gen_mm2s(generator &gen) {
 
     if (x.type == connection_type::host) {
         gen.println("qdma_axis<{},0,0,0> x;", bits);
-        gen.println("x.data = mem_x[i];");
+        gen.println("x.data = mem[i];");
         gen.println("x.keep_all();");
         gen.println("stream_x.write(x);");
     }
 
-    if (y.type == connection_type::host) {
-        gen.println("qdma_axis<{},0,0,0> y;", bits);
-        gen.println("y.data = mem_y[i];");
-        gen.println("y.keep_all();");
-        gen.println("stream_y.write(y);");
-    }
-
     gen.println<generator::DECREASE_BEFORE>("}}");
     gen.println<generator::DECREASE_BEFORE>("}}");
 }
 
-bool dot_generator::need_s2mm() const {
+bool asum_generator::need_s2mm() const {
     return out.type == connection_type::host;
 }
 
-void dot_generator::gen_s2mm(generator &gen) {
+void asum_generator::gen_s2mm(generator &gen) {
     unsigned bits = datatype_to_bits(k.type);
 
     if (out.type != connection_type::host) {
@@ -194,7 +169,7 @@ void dot_generator::gen_s2mm(generator &gen) {
     gen.println<generator::DECREASE_BEFORE>("}}");
 }
 
-std::vector<pl_kernel_generator> dot_generator::get_pl_generators() {
+std::vector<pl_kernel_generator> asum_generator::get_pl_generators() {
     std::vector<pl_kernel_generator> generators;
     if (need_mm2s()) {
         generators.emplace_back("mm2s", [this](generator &gen) {
@@ -211,7 +186,7 @@ std::vector<pl_kernel_generator> dot_generator::get_pl_generators() {
     return generators;
 }
 
-void dot_generator::gen_link(generator &gen) {
+void asum_generator::gen_link(generator &gen) {
     gen.println("nk={0}_mm2s:1:{0}_mm2s", k.user_name);
     if (out.type == connection_type::host) {
         gen.println("nk={0}_s2mm:1:{0}_s2mm", k.user_name);
@@ -222,10 +197,6 @@ void dot_generator::gen_link(generator &gen) {
     if (x.type == connection_type::host) {
         gen.println("sc={0}_mm2s.stream_x:ai_engine_0.{0}_x", k.user_name);
     }
-    if (y.type == connection_type::host) {
-        gen.println("sc={0}_mm2s.stream_y:ai_engine_0.{0}_y",
-                    k.user_name);
-    }
     if (out.type == connection_type::host) {
         gen.println("sc=ai_engine_0.{0}_out:{0}_s2mm.stream_out", k.user_name);
     }
@@ -235,8 +206,7 @@ void dot_generator::gen_link(generator &gen) {
         gen.println("slr={0}_s2mm:SLR0", k.user_name);
     }
     gen.println();
-    if (x.type == connection_type::host ||
-        y.type == connection_type::host) {
+    if (x.type == connection_type::host) {
         gen.println("sp={0}_mm2s.m_axi_gmem:MC_NOC0", k.user_name);
     }
     if (out.type == connection_type::host) {

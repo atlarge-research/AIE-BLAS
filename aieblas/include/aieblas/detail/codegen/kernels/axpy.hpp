@@ -8,11 +8,11 @@ namespace aieblas {
 namespace codegen {
 namespace generators {
 
-class scal_options : public kernel_options {
+class axpy_options : public kernel_options {
 public:
-    scal_options(const value &alpha_) : kernel_options(), alpha(alpha_) {}
+    axpy_options(const value &alpha_) : kernel_options(), alpha(alpha_) {}
 
-    virtual ~scal_options() {}
+    virtual ~axpy_options() {}
 
     bool disabled_arg(const std::string &arg) const override {
         if (arg == "alpha") {
@@ -25,15 +25,16 @@ public:
     const value alpha;
 };
 
-class scal_generator : public kernel_generator {
+class axpy_generator : public kernel_generator {
 public:
-    scal_generator(const kernel &kernel)
+    axpy_generator(const kernel &kernel)
     : kernel_generator(kernel), dtype(aie_dtype(kernel.type, kernel.vsize)),
-      x(kernel.connections.at("x")), alpha(kernel.connections.at("alpha")),
+      x(kernel.connections.at("x")), y(kernel.connections.at("y")),
+      alpha(kernel.connections.at("alpha")),
       out((kernel.connections.at("out"))),
-      options(dynamic_cast<scal_options &>(*kernel.extra_options)) {}
+      options(dynamic_cast<axpy_options &>(*kernel.extra_options)) {}
 
-    virtual ~scal_generator() {}
+    virtual ~axpy_generator() {}
 
     void gen_kernel_glob(generator &gen) override;
     void gen_kernel_args(generator &gen) override;
@@ -51,13 +52,14 @@ private:
     const std::string dtype;
 
     const connection x;
+    const connection y;
     const connection alpha;
     const connection out;
 
-    const scal_options &options;
+    const axpy_options &options;
 };
 
-std::vector<kernel_arg> get_scal_args();
+std::vector<kernel_arg> get_axpy_args();
 
 } // generators
 } // codegen

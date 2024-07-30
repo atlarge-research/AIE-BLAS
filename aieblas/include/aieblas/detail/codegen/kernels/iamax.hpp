@@ -8,32 +8,25 @@ namespace aieblas {
 namespace codegen {
 namespace generators {
 
-class scal_options : public kernel_options {
+class iamax_options : public kernel_options {
 public:
-    scal_options(const value &alpha_) : kernel_options(), alpha(alpha_) {}
+    iamax_options() : kernel_options() {}
 
-    virtual ~scal_options() {}
+    virtual ~iamax_options() {}
 
     bool disabled_arg(const std::string &arg) const override {
-        if (arg == "alpha") {
-            return alpha.set;
-        }
-
         return false;
     };
-
-    const value alpha;
 };
 
-class scal_generator : public kernel_generator {
+class iamax_generator : public kernel_generator {
 public:
-    scal_generator(const kernel &kernel)
-    : kernel_generator(kernel), dtype(aie_dtype(kernel.type, kernel.vsize)),
-      x(kernel.connections.at("x")), alpha(kernel.connections.at("alpha")),
-      out((kernel.connections.at("out"))),
-      options(dynamic_cast<scal_options &>(*kernel.extra_options)) {}
+    iamax_generator(const kernel &kernel)
+    : kernel_generator(kernel), dtype(datatype_to_str(kernel.type)),
+      x(kernel.connections.at("x")), out((kernel.connections.at("out"))),
+      options(dynamic_cast<iamax_options &>(*kernel.extra_options))  {}
 
-    virtual ~scal_generator() {}
+    virtual ~iamax_generator() {}
 
     void gen_kernel_glob(generator &gen) override;
     void gen_kernel_args(generator &gen) override;
@@ -51,13 +44,12 @@ private:
     const std::string dtype;
 
     const connection x;
-    const connection alpha;
     const connection out;
 
-    const scal_options &options;
+    const iamax_options &options;
 };
 
-std::vector<kernel_arg> get_scal_args();
+std::vector<kernel_arg> get_iamax_args();
 
 } // generators
 } // codegen

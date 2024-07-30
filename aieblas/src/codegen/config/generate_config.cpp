@@ -32,6 +32,7 @@ void generator::generate_config() {
 
     this->println("[connectivity]");
     for (const kernel &kernel : this->d.kernels) {
+        this->println("# Kernel {}", kernel.user_name);
         generate_config_kernel(*this, kernel);
         this->println();
     }

@@ -28,6 +28,15 @@ static inline void generate_header(generator &gen,
     gen.println();
 }
 
+generator::generator(fs::path json, fs::path output) : out_dir(output) {
+    // try {
+        parse_json(json);
+    // } catch (const parse_error &e) {
+    //     throw parse_error(std::format("Parsing error from '{}': {}",
+    //                                   json.native(), e.what()));
+    // }
+}
+
 void generator::open(fs::path filename, comment_type comment_type) {
     indent_ = 0;
     indented = false;

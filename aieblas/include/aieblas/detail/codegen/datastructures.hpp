@@ -9,7 +9,15 @@ namespace aieblas {
 namespace codegen {
 
 enum class blas_op : unsigned {
-    unknown, dot, scal
+    unknown,
+    asum,
+    axpy,
+    dot,
+    gemv,
+    iamax,
+    nrm2,
+    rot,
+    scal
 };
 
 enum class dtype : unsigned {
@@ -17,7 +25,7 @@ enum class dtype : unsigned {
 };
 
 enum class karg_type : unsigned {
-    unknown, input, output
+    unknown, input, output, input_index
 };
 
 struct kernel_arg {
@@ -27,7 +35,7 @@ struct kernel_arg {
 };
 
 enum class connection_type : unsigned {
-    host, kernel
+    none, host, kernel
 };
 
 struct connection {
@@ -36,6 +44,15 @@ struct connection {
     // kernel specific
     std::string kernel;
     std::string parameter;
+};
+
+class kernel_options {
+public:
+    kernel_options() {}
+
+    virtual ~kernel_options() {}
+
+    virtual bool disabled_arg(const std::string &arg) const = 0;
 };
 
 struct kernel {
@@ -47,6 +64,8 @@ struct kernel {
 
     // maps parameter (of this kernel) to outside data port
     std::unordered_map<std::string, connection> connections;
+
+    std::unique_ptr<kernel_options> extra_options;
 };
 
 struct data {
@@ -57,8 +76,20 @@ struct data {
 
 constexpr inline const char *blas_op_to_str(blas_op op) {
     switch (op) {
+    case blas_op::asum:
+        return "asum";
+    case blas_op::axpy:
+        return "axpy";
     case blas_op::dot:
         return "dot";
+    case blas_op::gemv:
+        return "gemv";
+    case blas_op::iamax:
+        return "iamax";
+    case blas_op::nrm2:
+        return "nrm2";
+    case blas_op::rot:
+        return "rot";
     case blas_op::scal:
         return "scal";
     default:
@@ -67,8 +98,20 @@ constexpr inline const char *blas_op_to_str(blas_op op) {
 }
 
 inline blas_op blas_op_from_str(const std::string_view str) {
-    if (str == "dot") {
+    if (str == "asum") {
+        return blas_op::asum;
+    } else if (str == "axpy") {
+        return blas_op::axpy;
+    } else if (str == "dot") {
         return blas_op::dot;
+    } else if (str == "gemv") {
+        return blas_op::gemv;
+    } else if (str == "iamax") {
+        return blas_op::iamax;
+    } else if (str == "nrm2") {
+        return blas_op::nrm2;
+    } else if (str == "rot") {
+        return blas_op::rot;
     } else if (str == "scal") {
         return blas_op::scal;
     } else {
@@ -159,6 +202,7 @@ datatype_to_native_type(dtype type, std::size_t min_vecsize) {
     for (const auto &pos_size : sizes) {
         if (min_vecsize <= pos_size) {
             size = pos_size;
+            break;
         }
     }
 
@@ -207,6 +251,7 @@ constexpr inline unsigned datatype_to_bits(dtype type) {
 constexpr inline const char *kernel_arg_type_to_str(karg_type karg) {
     switch (karg) {
     case karg_type::input:
+    case karg_type::input_index:
         return "input_plio";
     case karg_type::output:
         return "output_plio";
