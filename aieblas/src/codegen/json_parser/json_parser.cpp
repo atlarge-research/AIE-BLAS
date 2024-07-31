@@ -117,6 +117,9 @@ void generator::parse_json(fs::path json_file) {
         dtype type;
         unsigned vsize;
         unsigned wsize;
+        bool tile_set;
+        unsigned tile_x;
+        unsigned tile_y;
         std::unordered_map<std::string, connection> connections_map;
         std::unique_ptr<kernel_options> extra_options;
 
@@ -187,6 +190,24 @@ void generator::parse_json(fs::path json_file) {
             wsize = item["window_size"].get<unsigned>();
         }
 
+        if (item.count("tile")) {
+            if (!item["tile"].is_array() || item["tile"].size() < 2
+                || !item["tile"][0].is_number_unsigned()
+                || !item["tile"][1].is_number_unsigned()) {
+                throw parse_error(std::format(
+                    "tile should be an array of two unsigned integers in "
+                    "kernel {}.", i));
+            }
+
+            tile_set = true;
+            tile_x = item["tile"][0].get<unsigned>();
+            tile_y = item["tile"][1].get<unsigned>();
+        } else {
+            tile_set = false;
+            tile_x = 0;
+            tile_y = 0;
+        }
+
         if (item.count("extra")) {
             extra_options = get_kernel_options(operation, item["extra"]);
         } else {
@@ -233,7 +254,8 @@ void generator::parse_json(fs::path json_file) {
         }
 
         this->d.kernels.emplace_back(operation, std::move(user_name), type,
-                                     vsize, wsize, std::move(connections_map),
+                                     vsize, wsize, tile_set, tile_x, tile_y,
+                                     std::move(connections_map),
                                      std::move(extra_options));
     }
 }

@@ -162,11 +162,21 @@ void generator::generate_cmake() {
     this->println<DECREASE_BEFORE>(")");
     this->println();
 
+    this->println("###########");
+    this->println("# TARGETS #");
+    this->println("###########");
     this->println();
     this->println<INCREASE_AFTER>("add_custom_target(aie");
     this->println("COMMAND cp --preserve --update aieblas.xclbin "
                   "${{CMAKE_BINARY_DIR}}/aieblas.xclbin");
     this->println("DEPENDS xilinx xilinx/aieblas.xclbin");
+    this->println("WORKING_DIRECTORY xilinx");
+    this->println("VERBATIM");
+    this->println<DECREASE_BEFORE>(")");
+
+    this->println();
+    this->println<INCREASE_AFTER>("add_custom_target(aie_only");
+    this->println("DEPENDS xilinx xilinx/libadf.a");
     this->println("WORKING_DIRECTORY xilinx");
     this->println("VERBATIM");
     this->println<DECREASE_BEFORE>(")");

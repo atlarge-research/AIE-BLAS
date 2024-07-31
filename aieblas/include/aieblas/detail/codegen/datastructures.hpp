@@ -62,6 +62,10 @@ struct kernel {
     unsigned vsize;
     unsigned wsize;
 
+    bool tile_set;
+    unsigned tile_x;
+    unsigned tile_y;
+
     // maps parameter (of this kernel) to outside data port
     std::unordered_map<std::string, connection> connections;
 

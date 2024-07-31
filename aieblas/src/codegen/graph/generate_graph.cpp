@@ -153,6 +153,10 @@ static inline void generate_graph_hdr(generator &gen) {
         gen.println("source({0}k) = \"kernels/{0}.cpp\";",
                     kernel.user_name);
         gen.println("runtime<ratio>({}k) = 0.9;", kernel.user_name);
+        if (kernel.tile_set) {
+            gen.println("location<kernel>({}k) = tile({}, {});",
+                        kernel.user_name, kernel.tile_x, kernel.tile_y);
+        }
         gen.println();
     }
 
