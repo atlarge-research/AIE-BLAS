@@ -140,10 +140,10 @@ void gemv_generator::gen_kernel_body(generator &gen) {
 std::vector<kernel_arg> get_gemv_args() {
     return std::vector<kernel_arg>{{karg_type::input, "alpha", 0},
                                    {karg_type::input, "A", 2},
-                                   {karg_type::input, "x", 1},
+                                   {karg_type::input, "x", 1, true},
                                    {karg_type::input, "beta", 0},
-                                   {karg_type::input, "y", 1},
-                                   {karg_type::output, "out", 1}};
+                                   {karg_type::input, "y", 1, true},
+                                   {karg_type::output, "out", 1, true}};
 }
 
 void gemv_generator::gen_mm2s_A(generator &gen) {

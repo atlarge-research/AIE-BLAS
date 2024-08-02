@@ -88,13 +88,24 @@ static inline void generate_graph_hdr(generator &gen) {
             if (connection.type == connection_type::host) { // mapping to PLIO
                 if (arg.type == karg_type::input ||
                     arg.type == karg_type::input_index) {
-                    gen.println("connect<{}>{}({}_{}.out[0], {}k.in[{}]);",
-                                type, name, kernel.user_name, arg.name,
-                                kernel.user_name, in_count);
+                    std::string in_arg =
+                            std::format("{}k.in[{}]", kernel.user_name,
+                                        in_count);
+                    if (arg.async) {
+                        in_arg = std::format("async({})", in_arg);
+                    }
+                    gen.println("connect<{}>{}({}_{}.out[0], {});",
+                                type, name, kernel.user_name, arg.name, in_arg);
                 } else {
-                    gen.println("connect<{}>{}({}k.out[{}], {}_{}.in[0]);",
-                                type, name, kernel.user_name, out_count,
-                                kernel.user_name, arg.name);
+                    std::string out_arg =
+                            std::format("{}k.out[{}]", kernel.user_name,
+                                        out_count);
+                    if (arg.async) {
+                        out_arg = std::format("async({})", out_arg);
+                    }
+                    gen.println("connect<{}>{}({}, {}_{}.in[0]);",
+                                type, name, out_arg, kernel.user_name,
+                                arg.name);
                 }
             } else if (arg.type == karg_type::output) { // mapping to ext kernel
                 // find external kernel we are mapping against
@@ -110,10 +121,12 @@ static inline void generate_graph_hdr(generator &gen) {
                 }
                 unsigned ext_in_count = 0;
                 unsigned ext_out_count = 0;
+                bool ext_async = false;
 
                 // find external kernel argument with correct in/out index
                 for (const auto &ext_arg : get_kernel_args(it->operation)) {
                     if (ext_arg.name == connection.parameter) {
+                        ext_async = ext_arg.async;
                         break;
                     }
 
@@ -125,16 +138,34 @@ static inline void generate_graph_hdr(generator &gen) {
                     }
                 }
 
+                std::string out_arg, in_arg;
                 if (arg.type == karg_type::input ||
                     arg.type == karg_type::input_index) {
-                    gen.println("connect<{}>{}({}k.out[{}], {}k.in[{}]);",
-                                type, name, it->user_name, ext_out_count,
-                                kernel.user_name, in_count);
+                    out_arg = std::format("{}k.out[{}]", it->user_name,
+                                          ext_out_count);
+                    if (ext_async) {
+                        out_arg = std::format("async({})", out_arg);
+                    }
+                    in_arg = std::format("{}k.in[{}]", kernel.user_name,
+                                         in_count);
+                    if (arg.async) {
+                        in_arg = std::format("async({})", in_arg);
+                    }
                 } else {
-                    gen.println("connect<{}>{}({}k.out[{}], {}k.in[{}]);",
-                                type, name, kernel.user_name, out_count,
-                                it->user_name, ext_out_count);
+                    out_arg = std::format("{}k.out[{}]", kernel.user_name,
+                                          out_count);
+                    if (arg.async) {
+                        out_arg = std::format("async({})", out_arg);
+                    }
+                    in_arg = std::format("{}k.in[{}]", it->user_name,
+                                         ext_in_count);
+                    if (ext_async) {
+                        in_arg = std::format("async({})", in_arg);
+                    }
                 }
+
+                gen.println("connect<{}>{}({}, {});", type, name, out_arg,
+                            in_arg);
             } else if (connection.type == connection_type::none) {
                 continue; // skip disabled argument
             }

@@ -32,6 +32,7 @@ struct kernel_arg {
     karg_type type;
     std::string name;
     unsigned dimensions; // 0: scalar 1: vector 2: matrix
+    bool async = false;
 };
 
 enum class connection_type : unsigned {
