@@ -71,10 +71,10 @@ void nrm2_generator::gen_kernel_body(generator &gen) {
         result = "aie::reduce_add(result)";
     }
     if (k.type == dtype::float32) {
-        gen.println("writeincr(out, aie::sqrt({}));", result);
+        gen.println("writeincr(out, aie::sqrt({}), true);", result);
     } else {
         gen.println("writeincr(out, static_cast<{}>(aie::sqrt("
-                    "{})));", datatype_to_str(k.type),
+                    "{})), true);", datatype_to_str(k.type),
                     result);
     }
     gen.println<generator::DECREASE_BEFORE>("}}");

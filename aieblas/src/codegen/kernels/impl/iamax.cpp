@@ -54,7 +54,7 @@ void iamax_generator::gen_kernel_body(generator &gen) {
     gen.println("*cycle += 1;");
     gen.println();
     gen.println<generator::INCREASE_AFTER>("if (*cycle == *num_cycles) {{");
-    gen.println("writeincr(out, index);");
+    gen.println("writeincr(out, index, true);");
     gen.println<generator::DECREASE_BEFORE>("}}");
 }
 

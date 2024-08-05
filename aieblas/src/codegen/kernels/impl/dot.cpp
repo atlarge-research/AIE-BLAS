@@ -69,9 +69,9 @@ void dot_generator::gen_kernel_body(generator &gen) {
     gen.println();
     gen.println<generator::INCREASE_AFTER>("if (*cycle == *num_cycles) {{");
     if (k.vsize == 0) {
-        gen.println("writeincr(out, result);");
+        gen.println("writeincr(out, result, true);");
     } else {
-        gen.println("writeincr(out, aie::reduce_add(result));");
+        gen.println("writeincr(out, aie::reduce_add(result), true);");
     }
     gen.println<generator::DECREASE_BEFORE>("}}");
 }

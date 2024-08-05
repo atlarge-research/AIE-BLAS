@@ -51,8 +51,11 @@ static inline void generate_graph_hdr(generator &gen) {
                 if (arg.type == karg_type::input_index) {
                     plio_type = "plio_64_bits";
                 } else {
-                    plio_type= std::format("plio_{}_bits",
-                                           datatype_to_bits(kernel.type));
+                    unsigned bits = datatype_to_bits(kernel.type);
+                    if (bits < 32) {
+                        bits = 32;
+                    }
+                    plio_type= std::format("plio_{}_bits", bits);
                 }
 
                 gen.println("{1}_{2} = {0}::create(\"{1}_{2}\", {3}, \"data/"
@@ -128,6 +131,11 @@ static inline void generate_graph_hdr(generator &gen) {
                     if (ext_arg.name == connection.parameter) {
                         ext_async = ext_arg.async;
                         break;
+                    }
+
+                    if (it->connections.at(ext_arg.name).type
+                        == connection_type::none) {
+                        continue;
                     }
 
                     if (ext_arg.type == karg_type::input ||

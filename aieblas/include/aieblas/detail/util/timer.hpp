@@ -45,23 +45,23 @@ public:
 
     template <class duration = std::chrono::milliseconds>
     inline duration time(const Event<Clock> &end) const {
-        return time(events.front(), end);
+        return time<duration>(events.front(), end);
     }
 
     template <class duration = std::chrono::milliseconds>
     inline duration time() const {
-        return time(events.front(), events.back());
+        return time<duration>(events.front(), events.back());
     }
 
     template <class duration = std::chrono::milliseconds>
     inline duration time(const std::string &start,
                          const std::string &end) const {
-        return time(get_event(start), get_event(end));
+        return time<duration>(get_event(start), get_event(end));
     }
 
     template <class duration = std::chrono::milliseconds>
     inline duration time(const std::string &end) const {
-        return time(events.front(), get_event(end));
+        return time<duration>(events.front(), get_event(end));
     }
 
 private:
