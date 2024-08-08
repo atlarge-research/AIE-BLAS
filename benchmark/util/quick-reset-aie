@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+
+from subprocess import run
+from tempfile import TemporaryDirectory as TD
+
+XBUTIL = '/opt/xilinx/xrt/bin/xbutil'
+DEFAULT_FPGA = '0000:86:00.1'
+
+
+def quick_reset(device: str, directory: str, force: bool = False) -> None:
+    print("Running quick validation...")
+
+    quick_validate = run([XBUTIL, 'validate', '--device', device,
+                          '--run', 'quick'], cwd=directory)
+
+    if quick_validate.returncode == 0:
+        print("Running aie validation...")
+        aie_validate = run([XBUTIL, 'validate', '--device', device,
+                            '--run', 'aie-pl'], cwd=directory)
+
+        if aie_validate.returncode == 0:
+            print("Successfully performed a quick reset of the AIE on the "
+                  "FPGA!")
+            return
+
+    print("Quick reset has failed, falling back to a full reset...")
+    args = [XBUTIL, 'reset', '--device', device]
+    if force:
+        args.append("--force")
+    run(args, cwd=directory)
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='Quick reset of AIE on FPGA')
+    parser.add_argument('--device', '-d', type=str, default=DEFAULT_FPGA,
+                        help="FPGA to reset, defaults to '%(default)s'")
+    parser.add_argument('--force', '-f', action='store_true',
+                        help="Force the FPGA reset if the quick reset fails")
+    args = parser.parse_args()
+
+    print(f"Performing quick reset on device '{args.device}'")
+    # Use a tempdir as working directory, since xbutil does not work if xrt.ini
+    # is present in the current directory
+    with TD(prefix='quick-reset-aie') as cwd:
+        quick_reset(args.device, cwd, args.force)

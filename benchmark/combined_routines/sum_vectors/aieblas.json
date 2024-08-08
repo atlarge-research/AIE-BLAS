@@ -1,0 +1,718 @@
+{
+    "kernels": [
+        {
+            "blas_op": "axpy",
+            "user_name": "in0",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              11,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in1",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              10,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in2",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              13,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in3",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              14,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in4",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              16,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in5",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              15,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in6",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              18,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in7",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              19,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in8",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              21,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in9",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              20,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in10",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              23,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in11",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              24,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in12",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              26,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in13",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              25,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in14",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              28,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "in15",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              29,
+              1
+            ]
+        },{
+          "blas_op": "axpy",
+          "user_name": "red10",
+          "type": "int32",
+          "vector_size": 16,
+          "window_size": 256,
+          "extra": {
+            "alpha": 1
+          },
+          "tile": [
+            11,
+            1
+          ]
+      },
+        {
+            "blas_op": "axpy",
+            "user_name": "red11",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              13,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red12",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              16,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red13",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              18,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red14",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              21,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red15",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              23,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red16",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              26,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red17",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              28,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red20",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              12,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red21",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              17,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red22",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              22,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red23",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              27,
+              1
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red30",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              30,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red31",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              32,
+              0
+            ]
+        },
+        {
+            "blas_op": "axpy",
+            "user_name": "red40",
+            "type": "int32",
+            "vector_size": 16,
+            "window_size": 256,
+            "extra": {
+              "alpha": 1
+            },
+            "tile": [
+              31,
+              0
+            ]
+        }
+    ],
+    "connections": [
+        {
+          "in": {
+            "kernel": "in0",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red10",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "in1",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red10",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "in2",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red11",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "in3",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red11",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "in4",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red12",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "in5",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red12",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "in6",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red13",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "in7",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red13",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "in8",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red14",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "in9",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red14",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "in10",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red15",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "in11",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red15",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "in12",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red16",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "in13",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red16",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "in14",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red17",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "in15",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red17",
+            "parameter": "y"
+          }
+        },
+
+        {
+          "in": {
+            "kernel": "red10",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red20",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "red11",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red20",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "red12",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red21",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "red13",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red21",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "red14",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red22",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "red15",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red22",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "red16",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red23",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "red17",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red23",
+            "parameter": "y"
+          }
+        },
+
+        {
+          "in": {
+            "kernel": "red20",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red30",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "red21",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red30",
+            "parameter": "y"
+          }
+        }, {
+          "in": {
+            "kernel": "red22",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red31",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "red23",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red31",
+            "parameter": "y"
+          }
+        },
+
+        {
+          "in": {
+            "kernel": "red30",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red40",
+            "parameter": "x"
+          }
+        }, {
+          "in": {
+            "kernel": "red31",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "red40",
+            "parameter": "y"
+          }
+        }
+    ],
+    "platform": "xilinx_vck5000_gen4x8_qdma_2_202220_1",
+    "profile": false
+}

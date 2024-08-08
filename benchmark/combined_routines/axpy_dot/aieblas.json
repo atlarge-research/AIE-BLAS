@@ -1,0 +1,32 @@
+{
+    "kernels": [
+        {
+            "blas_op": "axpy",
+            "user_name": "axpy",
+            "type": "int32",
+            "vector_size": 8,
+            "window_size": 256
+        },
+        {
+            "blas_op": "dot",
+            "user_name": "dot",
+            "type": "int32",
+            "vector_size": 8,
+            "window_size": 256
+        }
+    ],
+    "connections": [
+        {
+          "in": {
+            "kernel": "axpy",
+            "parameter": "out"
+          },
+          "out": {
+            "kernel": "dot",
+            "parameter": "x"
+          }
+        }
+    ],
+    "platform": "xilinx_vck5000_gen4x8_qdma_2_202220_1",
+    "profile": false
+}

@@ -23,7 +23,7 @@ public:
     }
 };
 
-template <class Clock = std::chrono::high_resolution_clock>
+template <class Clock = std::chrono::steady_clock>
 class Timer {
 public:
     Timer() { }
