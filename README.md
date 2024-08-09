@@ -21,7 +21,7 @@ Level 2:
 - AMD Versal VCK5000
 
 ### Compiling the library
-To compile the code generator, run `./build.sh` in the folder [`aieblas/`](./aieblas/).
+To compile the code generator, run `./configure.sh && cmake --build build` in the folder [`aieblas/`](./aieblas/).
 
 ### Running the benchmarks
 To run the benchmarks, first compile the code generator, and then build the benchmarks by running `./build-all.sh` in the folder [`benchmark/util`](./benchmark/util).
