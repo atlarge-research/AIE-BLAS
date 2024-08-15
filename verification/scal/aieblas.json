@@ -1,0 +1,13 @@
+{
+    "kernels": [
+        {
+            "blas_op": "scal",
+            "user_name": "scal",
+            "type": "float",
+            "vector_size": 16,
+            "window_size": 256
+        }
+    ],
+    "platform": "xilinx_vck5000_gen4x8_qdma_2_202220_1",
+    "profile": false
+}
