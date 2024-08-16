@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
 
     unsigned errors = 0;
     for (std::size_t i = 0; i < args.size; ++i) {
-        if (std::fabs(result_device[i] - result[i]) >= 1e6) {
+        if (std::fabs(result_device[i] - result[i]) >= std::fabs(result[i]) * 1e-4) {
             std::println("FAIL! ({} != {})", result_device[i], result[i]);
             errors += 1;
         }

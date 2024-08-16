@@ -121,8 +121,8 @@ int main(int argc, char *argv[]) {
 
     std::println("Allocating memory...");
     // get memory bank groups for device buffers
-    xrtMemoryGroup bank_x = mm2s.group_id(1);
-    xrtMemoryGroup bank_y = mm2s.group_id(2);
+    xrtMemoryGroup bank_x = mm2s.group_id(0);
+    xrtMemoryGroup bank_y = mm2s.group_id(1);
     xrtMemoryGroup bank_result_x = s2mm.group_id(0);
     xrtMemoryGroup bank_result_y = s2mm.group_id(1);
 
@@ -189,17 +189,18 @@ int main(int argc, char *argv[]) {
 
     std::println("Checking result...");
     bo_result_x.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
+    bo_result_y.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
     float *result_device_x = bo_result_x.map<float *>();
     float *result_device_y = bo_result_y.map<float *>();
 
     unsigned errors = 0;
     for (std::size_t i = 0; i < args.size; ++i) {
-        if (std::fabs(result_device_x[i] - result_x[i]) >= 1e6) {
-            std::println("FAIL! ({} != {})", result_device_x[i], result_x[i]);
+        if (std::fabs(result_device_x[i] - result_x[i]) >= std::fabs(result_x[i]) * 1e-4) {
+            std::println("FAIL x[{}]! ({} != {})", i, result_device_x[i], result_x[i]);
             errors += 1;
         }
-        if (std::fabs(result_device_y[i] - result_y[i]) >= 1e6) {
-            std::println("FAIL! ({} != {})", result_device_y[i], result_y[i]);
+        if (std::fabs(result_device_y[i] - result_y[i]) >= std::fabs(result_y[i]) * 1e-4) {
+            std::println("FAIL y[{}]! ({} != {})", i, result_device_y[i], result_y[i]);
             errors += 1;
         }
     }

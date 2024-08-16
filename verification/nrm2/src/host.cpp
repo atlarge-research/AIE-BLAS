@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
     float *result_device = bo_result.map<float *>();
 
     unsigned errors = 0;
-    if (std::fabs(*result_device - result) >= 1e6) {
+    if (std::fabs(*result_device - result) >= std::fabs(result) * 1e-6) {
         std::println("FAIL! ({} != {})", *result_device, result);
         errors += 1;
     }
